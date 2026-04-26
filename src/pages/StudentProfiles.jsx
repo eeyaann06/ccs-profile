@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import {
   collection,
   getDocs,
@@ -11,11 +12,16 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { db, auth } from "../config/firebase";
+import { db, secondaryAuth } from "../config/firebase"; 
 import "../styles/StudentProfiles.css";
 
 // ── Firestore collection ─────────────────────────────────────
 const COLLECTION = "students";
+
+// ── Portal wrapper — escapes any stacking context ────────────
+function Modal({ children }) {
+  return createPortal(children, document.body);
+}
 
 // ── Icons ────────────────────────────────────────────────────
 function SearchIcon({ size = 16 }) {
@@ -181,7 +187,6 @@ function SpinnerIcon() {
     </svg>
   );
 }
-
 function KeyIcon() {
   return (
     <svg
@@ -199,7 +204,6 @@ function KeyIcon() {
     </svg>
   );
 }
-
 function EyeIcon({ off = false }) {
   return (
     <svg
@@ -226,6 +230,8 @@ function EyeIcon({ off = false }) {
     </svg>
   );
 }
+
+// ── Helpers ──────────────────────────────────────────────────
 function splitTags(raw) {
   return raw
     .split(",")
@@ -249,7 +255,6 @@ function formToDoc(form, existing = {}) {
     },
     skills: splitTags(form.skillsRaw),
     affiliations: splitTags(form.affiliationsRaw),
-    // preserve existing data that the form doesn't manage
     activities: existing.activities ?? [],
     academicHistory: existing.academicHistory ?? [],
     violations: existing.violations ?? [],
@@ -276,11 +281,10 @@ function CreateAccountModal({ student, onClose, onSuccess }) {
   const defaultUsername = student.studentId.toLowerCase().replace(/-/g, "");
   const defaultEmail = student.email || `${defaultUsername}@ccs.edu`;
   const defaultUserId = "USR-" + student.studentId;
-  // Password = birthday digits YYYYMMDD, fallback to studentId digits
   const birthdayRaw = student.personalInfo?.birthday ?? "";
   const defaultPassword = birthdayRaw
-    ? birthdayRaw.replace(/-/g, "") // "2004-03-06" → "20040306"
-    : student.studentId.replace(/\D/g, ""); // fallback: digits only
+    ? birthdayRaw.replace(/-/g, "")
+    : student.studentId.replace(/\D/g, "");
 
   const [username, setUsername] = useState(defaultUsername);
   const [email, setEmail] = useState(defaultEmail);
@@ -300,7 +304,7 @@ function CreateAccountModal({ student, onClose, onSuccess }) {
     setDone(false);
     try {
       const { user: firebaseUser } = await createUserWithEmailAndPassword(
-        auth,
+        secondaryAuth,
         email.trim(),
         password
       );
@@ -332,149 +336,150 @@ function CreateAccountModal({ student, onClose, onSuccess }) {
   }
 
   return (
-    <div className="sp-modal-overlay" onClick={onClose}>
-      <div
-        className="sp-modal sp-modal--account"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header — reuses existing modal header styles */}
-        <div className="sp-modal-header">
-          <div className="sp-modal-avatar">
-            {student.name?.charAt(0)?.toUpperCase() || "?"}
-          </div>
-          <div className="sp-modal-identity">
-            <h2 className="sp-modal-name">Create Account</h2>
-            <p className="sp-modal-id">{student.studentId}</p>
-            <div className="sp-modal-meta">
-              <span className="sp-badge sp-badge--course">
-                {student.course}
-              </span>
-              <span className="sp-badge sp-badge--year">
-                Year {student.year}
-              </span>
-              <span
-                className={`sp-badge ${
-                  student.status === "Active"
-                    ? "sp-badge--active"
-                    : "sp-badge--irregular"
-                }`}
-              >
-                {student.status}
-              </span>
+    <Modal>
+      <div className="sp-modal-overlay" onClick={onClose}>
+        <div
+          className="sp-modal sp-modal--account"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="sp-modal-header">
+            <div className="sp-modal-avatar">
+              {student.name?.charAt(0)?.toUpperCase() || "?"}
             </div>
-          </div>
-          <button className="sp-modal-close" onClick={onClose}>
-            <CloseIcon />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="sp-modal-body">
-          <div className="sp-account-fields">
-            {/* Read-only fields */}
-            {[
-              { label: "User ID (auto)", value: defaultUserId },
-              { label: "Role (auto)", value: "Student" },
-            ].map(({ label, value }) => (
-              <div key={label} className="sp-form-group">
-                <label>{label}</label>
-                <input readOnly value={value} className="sp-account-readonly" />
-              </div>
-            ))}
-
-            {/* Username */}
-            <div className="sp-form-group">
-              <label>Username</label>
-              <input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                disabled={creating || done}
-                placeholder="username"
-              />
-            </div>
-
-            {/* Email */}
-            <div className="sp-form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={creating || done}
-                placeholder="email@example.com"
-              />
-            </div>
-
-            {/* Password */}
-            <div className="sp-form-group">
-              <label>
-                Password
-                <span className="sp-form-hint">
-                  {" "}
-                  (from birthday: {birthdayRaw || "not set"})
+            <div className="sp-modal-identity">
+              <h2 className="sp-modal-name">Create Account</h2>
+              <p className="sp-modal-id">{student.studentId}</p>
+              <div className="sp-modal-meta">
+                <span className="sp-badge sp-badge--course">
+                  {student.course}
                 </span>
-              </label>
-              <div className="sp-account-pw-wrap">
-                <input
-                  type={showPw ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={creating || done}
-                  placeholder="password"
-                />
-                <button
-                  type="button"
-                  className="sp-account-eye"
-                  onClick={() => setShowPw((v) => !v)}
+                <span className="sp-badge sp-badge--year">
+                  Year {student.year}
+                </span>
+                <span
+                  className={`sp-badge ${
+                    student.status === "Active"
+                      ? "sp-badge--active"
+                      : "sp-badge--irregular"
+                  }`}
                 >
-                  <EyeIcon off={showPw} />
-                </button>
+                  {student.status}
+                </span>
               </div>
             </div>
+            <button className="sp-modal-close" onClick={onClose}>
+              <CloseIcon />
+            </button>
+          </div>
 
-            {/* Log console */}
-            {logs.length > 0 && (
-              <div className="sp-account-log">
-                {logs.map((l, i) => (
-                  <div
-                    key={i}
-                    className={`sp-account-log-line sp-account-log-line--${l.type}`}
-                  >
-                    {l.msg}
-                  </div>
-                ))}
+          <div className="sp-modal-body">
+            <div className="sp-account-fields">
+              {[
+                { label: "User ID (auto)", value: defaultUserId },
+                { label: "Role (auto)", value: "Student" },
+              ].map(({ label, value }) => (
+                <div key={label} className="sp-form-group">
+                  <label>{label}</label>
+                  <input
+                    readOnly
+                    value={value}
+                    className="sp-account-readonly"
+                  />
+                </div>
+              ))}
+
+              <div className="sp-form-group">
+                <label>Username</label>
+                <input
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  disabled={creating || done}
+                  placeholder="username"
+                />
               </div>
+
+              <div className="sp-form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={creating || done}
+                  placeholder="email@example.com"
+                />
+              </div>
+
+              <div className="sp-form-group">
+                <label>
+                  Password
+                  <span className="sp-form-hint">
+                    {" "}
+                    (from birthday: {birthdayRaw || "not set"})
+                  </span>
+                </label>
+                <div className="sp-account-pw-wrap">
+                  <input
+                    type={showPw ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={creating || done}
+                    placeholder="password"
+                  />
+                  <button
+                    type="button"
+                    className="sp-account-eye"
+                    onClick={() => setShowPw((v) => !v)}
+                  >
+                    <EyeIcon off={showPw} />
+                  </button>
+                </div>
+              </div>
+
+              {logs.length > 0 && (
+                <div className="sp-account-log">
+                  {logs.map((l, i) => (
+                    <div
+                      key={i}
+                      className={`sp-account-log-line sp-account-log-line--${l.type}`}
+                    >
+                      {l.msg}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div
+            className="sp-form-actions"
+            style={{ padding: "0 1.5rem 1.5rem" }}
+          >
+            <button className="sp-btn sp-btn--ghost" onClick={onClose}>
+              {done ? "Close" : "Cancel"}
+            </button>
+            {!done ? (
+              <button
+                className="sp-btn sp-btn--primary"
+                onClick={handleCreate}
+                disabled={creating}
+              >
+                {creating ? (
+                  <>
+                    <SpinnerIcon /> Creating…
+                  </>
+                ) : (
+                  <>
+                    <KeyIcon /> Create Account
+                  </>
+                )}
+              </button>
+            ) : (
+              <span className="sp-account-done">✅ Account Ready</span>
             )}
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="sp-form-actions" style={{ padding: "0 1.5rem 1.5rem" }}>
-          <button className="sp-btn sp-btn--ghost" onClick={onClose}>
-            {done ? "Close" : "Cancel"}
-          </button>
-          {!done ? (
-            <button
-              className="sp-btn sp-btn--primary"
-              onClick={handleCreate}
-              disabled={creating}
-            >
-              {creating ? (
-                <>
-                  <SpinnerIcon /> Creating…
-                </>
-              ) : (
-                <>
-                  <KeyIcon /> Create Account
-                </>
-              )}
-            </button>
-          ) : (
-            <span className="sp-account-done">✅ Account Ready</span>
-          )}
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -503,234 +508,250 @@ function StudentFormModal({ initial, onSave, onClose, saving }) {
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
-    <div className="sp-modal-overlay" onClick={onClose}>
-      <div
-        className="sp-modal sp-modal--form"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="sp-modal-header">
-          <div className="sp-modal-avatar">
-            {form.name?.charAt(0)?.toUpperCase() || "?"}
+    <Modal>
+      <div className="sp-modal-overlay" onClick={onClose}>
+        <div
+          className="sp-modal sp-modal--form"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* ── Header ── */}
+          <div className="sp-modal-header">
+            <div className="sp-modal-avatar">
+              {form.name?.charAt(0)?.toUpperCase() || "?"}
+            </div>
+            <div className="sp-modal-identity">
+              <h2 className="sp-modal-name">
+                {isEdit ? "Edit Student" : "Add New Student"}
+              </h2>
+              <p className="sp-modal-id">
+                {isEdit ? initial.studentId : "New Record"}
+              </p>
+            </div>
+            <button className="sp-modal-close" onClick={onClose}>
+              <CloseIcon />
+            </button>
           </div>
-          <div className="sp-modal-identity">
-            <h2 className="sp-modal-name">
-              {isEdit ? "Edit Student" : "Add New Student"}
-            </h2>
-            <p className="sp-modal-id">
-              {isEdit ? initial.studentId : "New Record"}
-            </p>
+
+          {/* ── Body ── */}
+          <div className="sp-modal-body">
+            <form
+              className="sp-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                onSave(form);
+              }}
+            >
+              <div className="sp-form-scroll">
+                {/* Basic Information */}
+                <div className="sp-form-section-title">Basic Information</div>
+                <div className="sp-form-grid">
+                  <div className="sp-form-group">
+                    <label>Student ID *</label>
+                    <input
+                      required
+                      value={form.studentId}
+                      placeholder="CCS-2024-001"
+                      disabled={isEdit}
+                      onChange={(e) => set("studentId", e.target.value)}
+                    />
+                  </div>
+                  <div className="sp-form-group">
+                    <label>Full Name *</label>
+                    <input
+                      required
+                      value={form.name}
+                      placeholder="Juan Dela Cruz"
+                      onChange={(e) => set("name", e.target.value)}
+                    />
+                  </div>
+                  <div className="sp-form-group">
+                    <label>Course *</label>
+                    <select
+                      value={form.course}
+                      onChange={(e) => set("course", e.target.value)}
+                    >
+                      {["BSCS", "BSIT", "BSIS", "ACT"].map((c) => (
+                        <option key={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sp-form-group">
+                    <label>Year Level *</label>
+                    <select
+                      value={form.year}
+                      onChange={(e) => set("year", e.target.value)}
+                    >
+                      {[1, 2, 3, 4].map((y) => (
+                        <option key={y} value={y}>
+                          Year {y}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sp-form-group">
+                    <label>Email *</label>
+                    <input
+                      required
+                      type="email"
+                      value={form.email}
+                      placeholder="juan@ucab.edu.ph"
+                      onChange={(e) => set("email", e.target.value)}
+                    />
+                  </div>
+                  <div className="sp-form-group">
+                    <label>Status</label>
+                    <select
+                      value={form.status}
+                      onChange={(e) => set("status", e.target.value)}
+                    >
+                      {["Active", "Irregular", "LOA"].map((s) => (
+                        <option key={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Personal Information */}
+                <div className="sp-form-section-title">
+                  Personal Information
+                </div>
+                <div className="sp-form-grid">
+                  <div className="sp-form-group">
+                    <label>Birthday</label>
+                    <input
+                      type="date"
+                      value={form.birthday}
+                      onChange={(e) => set("birthday", e.target.value)}
+                    />
+                  </div>
+                  <div className="sp-form-group">
+                    <label>Contact Number</label>
+                    <input
+                      value={form.contact}
+                      placeholder="09171234567"
+                      onChange={(e) => set("contact", e.target.value)}
+                    />
+                  </div>
+                  <div className="sp-form-group">
+                    <label>Guardian</label>
+                    <input
+                      value={form.guardian}
+                      placeholder="Parent / Guardian name"
+                      onChange={(e) => set("guardian", e.target.value)}
+                    />
+                  </div>
+                  <div className="sp-form-group sp-form-group--full">
+                    <label>Address</label>
+                    <input
+                      value={form.address}
+                      placeholder="Brgy., City, Province"
+                      onChange={(e) => set("address", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Skills & Affiliations */}
+                <div className="sp-form-section-title">
+                  Skills &amp; Affiliations
+                </div>
+                <div className="sp-form-grid">
+                  <div className="sp-form-group sp-form-group--full">
+                    <label>
+                      Skills{" "}
+                      <span className="sp-form-hint">(comma-separated)</span>
+                    </label>
+                    <input
+                      value={form.skillsRaw}
+                      placeholder="Programming, Web Development, Python"
+                      onChange={(e) => set("skillsRaw", e.target.value)}
+                    />
+                  </div>
+                  <div className="sp-form-group sp-form-group--full">
+                    <label>
+                      Affiliations{" "}
+                      <span className="sp-form-hint">(comma-separated)</span>
+                    </label>
+                    <input
+                      value={form.affiliationsRaw}
+                      placeholder="Google Dev Student Club, Basketball Varsity"
+                      onChange={(e) => set("affiliationsRaw", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Pinned footer */}
+              <div className="sp-form-actions">
+                <button
+                  type="button"
+                  className="sp-btn sp-btn--ghost"
+                  onClick={onClose}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="sp-btn sp-btn--primary"
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <>
+                      <SpinnerIcon /> Saving…
+                    </>
+                  ) : isEdit ? (
+                    "Save Changes"
+                  ) : (
+                    "Add Student"
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
-          <button className="sp-modal-close" onClick={onClose}>
-            <CloseIcon />
-          </button>
-        </div>
-
-        <div className="sp-modal-body">
-          <form
-            className="sp-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              onSave(form);
-            }}
-          >
-            <div className="sp-form-section-title">Basic Information</div>
-            <div className="sp-form-grid">
-              <div className="sp-form-group">
-                <label>Student ID *</label>
-                <input
-                  required
-                  value={form.studentId}
-                  placeholder="CCS-2024-001"
-                  disabled={isEdit}
-                  onChange={(e) => set("studentId", e.target.value)}
-                />
-              </div>
-              <div className="sp-form-group">
-                <label>Full Name *</label>
-                <input
-                  required
-                  value={form.name}
-                  placeholder="Juan Dela Cruz"
-                  onChange={(e) => set("name", e.target.value)}
-                />
-              </div>
-              <div className="sp-form-group">
-                <label>Course *</label>
-                <select
-                  value={form.course}
-                  onChange={(e) => set("course", e.target.value)}
-                >
-                  {["BSCS", "BSIT", "BSIS", "ACT"].map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="sp-form-group">
-                <label>Year Level *</label>
-                <select
-                  value={form.year}
-                  onChange={(e) => set("year", e.target.value)}
-                >
-                  {[1, 2, 3, 4].map((y) => (
-                    <option key={y} value={y}>
-                      Year {y}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="sp-form-group">
-                <label>Email *</label>
-                <input
-                  required
-                  type="email"
-                  value={form.email}
-                  placeholder="juan@ucab.edu.ph"
-                  onChange={(e) => set("email", e.target.value)}
-                />
-              </div>
-              <div className="sp-form-group">
-                <label>Status</label>
-                <select
-                  value={form.status}
-                  onChange={(e) => set("status", e.target.value)}
-                >
-                  {["Active", "Irregular", "LOA"].map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="sp-form-section-title">Personal Information</div>
-            <div className="sp-form-grid">
-              <div className="sp-form-group">
-                <label>Birthday</label>
-                <input
-                  type="date"
-                  value={form.birthday}
-                  onChange={(e) => set("birthday", e.target.value)}
-                />
-              </div>
-              <div className="sp-form-group">
-                <label>Contact Number</label>
-                <input
-                  value={form.contact}
-                  placeholder="09171234567"
-                  onChange={(e) => set("contact", e.target.value)}
-                />
-              </div>
-              <div className="sp-form-group">
-                <label>Guardian</label>
-                <input
-                  value={form.guardian}
-                  placeholder="Parent / Guardian name"
-                  onChange={(e) => set("guardian", e.target.value)}
-                />
-              </div>
-              <div className="sp-form-group sp-form-group--full">
-                <label>Address</label>
-                <input
-                  value={form.address}
-                  placeholder="Brgy., City, Province"
-                  onChange={(e) => set("address", e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="sp-form-section-title">
-              Skills &amp; Affiliations
-            </div>
-            <div className="sp-form-grid">
-              <div className="sp-form-group sp-form-group--full">
-                <label>
-                  Skills <span className="sp-form-hint">(comma-separated)</span>
-                </label>
-                <input
-                  value={form.skillsRaw}
-                  placeholder="Programming, Web Development, Python"
-                  onChange={(e) => set("skillsRaw", e.target.value)}
-                />
-              </div>
-              <div className="sp-form-group sp-form-group--full">
-                <label>
-                  Affiliations{" "}
-                  <span className="sp-form-hint">(comma-separated)</span>
-                </label>
-                <input
-                  value={form.affiliationsRaw}
-                  placeholder="Google Dev Student Club, Basketball Varsity"
-                  onChange={(e) => set("affiliationsRaw", e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="sp-form-actions">
-              <button
-                type="button"
-                className="sp-btn sp-btn--ghost"
-                onClick={onClose}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="sp-btn sp-btn--primary"
-                disabled={saving}
-              >
-                {saving ? (
-                  <>
-                    <SpinnerIcon /> Saving…
-                  </>
-                ) : isEdit ? (
-                  "Save Changes"
-                ) : (
-                  "Add Student"
-                )}
-              </button>
-            </div>
-          </form>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
 // ── Delete Confirm Modal ─────────────────────────────────────
 function DeleteConfirmModal({ student, onConfirm, onClose, deleting }) {
   return (
-    <div className="sp-modal-overlay" onClick={onClose}>
-      <div
-        className="sp-modal sp-modal--confirm"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="sp-confirm-body">
-          <div className="sp-confirm-icon">🗑️</div>
-          <h3>Delete Student?</h3>
-          <p>
-            You are about to permanently delete <strong>{student.name}</strong>{" "}
-            ({student.studentId}). This action cannot be undone.
-          </p>
-          <div className="sp-form-actions">
-            <button className="sp-btn sp-btn--ghost" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              className="sp-btn sp-btn--danger"
-              onClick={onConfirm}
-              disabled={deleting}
-            >
-              {deleting ? (
-                <>
-                  <SpinnerIcon /> Deleting…
-                </>
-              ) : (
-                "Yes, Delete"
-              )}
-            </button>
+    <Modal>
+      <div className="sp-modal-overlay" onClick={onClose}>
+        <div
+          className="sp-modal sp-modal--confirm"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="sp-confirm-body">
+            <div className="sp-confirm-icon">🗑️</div>
+            <h3>Delete Student?</h3>
+            <p>
+              You are about to permanently delete{" "}
+              <strong>{student.name}</strong> ({student.studentId}). This action
+              cannot be undone.
+            </p>
+            <div className="sp-form-actions">
+              <button className="sp-btn sp-btn--ghost" onClick={onClose}>
+                Cancel
+              </button>
+              <button
+                className="sp-btn sp-btn--danger"
+                onClick={onConfirm}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <>
+                    <SpinnerIcon /> Deleting…
+                  </>
+                ) : (
+                  "Yes, Delete"
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -752,199 +773,192 @@ function StudentModal({ student, onClose, onEdit }) {
   ];
 
   return (
-    <div className="sp-modal-overlay" onClick={onClose}>
-      <div className="sp-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="sp-modal-header">
-          <div className="sp-modal-avatar">
-            {student.name?.charAt(0) ?? "?"}
-          </div>
-          <div className="sp-modal-identity">
-            <h2 className="sp-modal-name">{student.name}</h2>
-            <p className="sp-modal-id">{student.studentId}</p>
-            <div className="sp-modal-meta">
-              <span className="sp-badge sp-badge--course">
-                {student.course}
-              </span>
-              <span className="sp-badge sp-badge--year">
-                Year {student.year}
-              </span>
-              <span
-                className={`sp-badge ${
-                  student.status === "Active"
-                    ? "sp-badge--active"
-                    : "sp-badge--irregular"
-                }`}
-              >
-                {student.status}
-              </span>
+    <Modal>
+      <div className="sp-modal-overlay" onClick={onClose}>
+        <div className="sp-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="sp-modal-header">
+            <div className="sp-modal-avatar">
+              {student.name?.charAt(0) ?? "?"}
             </div>
-          </div>
-          <div className="sp-modal-header-actions">
-            <button
-              className="sp-btn sp-btn--ghost sp-btn--sm"
-              onClick={() => {
-                onClose();
-                onEdit(student);
-              }}
-            >
-              <EditIcon /> Edit
-            </button>
-            <button className="sp-modal-close" onClick={onClose}>
-              <CloseIcon />
-            </button>
-          </div>
-        </div>
-
-        <div className="sp-modal-tabs">
-          {tabs.map((t) => (
-            <button
-              key={t.key}
-              className={`sp-modal-tab ${
-                tab === t.key ? "sp-modal-tab--active" : ""
-              }`}
-              onClick={() => setTab(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="sp-modal-body">
-          {tab === "personal" && (
-            <div className="sp-tab-content">
-              <div className="sp-info-grid">
-                {[
-                  ["Email", student.email],
-                  ["Birthday", student.personalInfo?.birthday || "—"],
-                  ["Contact", student.personalInfo?.contact || "—"],
-                  ["Guardian", student.personalInfo?.guardian || "—"],
-                ].map(([label, value]) => (
-                  <div key={label} className="sp-info-item">
-                    <span className="sp-info-label">{label}</span>
-                    <span className="sp-info-value">{value}</span>
-                  </div>
-                ))}
-                <div className="sp-info-item sp-info-item--full">
-                  <span className="sp-info-label">Address</span>
-                  <span className="sp-info-value">
-                    {student.personalInfo?.address || "—"}
-                  </span>
-                </div>
+            <div className="sp-modal-identity">
+              <h2 className="sp-modal-name">{student.name}</h2>
+              <p className="sp-modal-id">{student.studentId}</p>
+              <div className="sp-modal-meta">
+                <span className="sp-badge sp-badge--course">
+                  {student.course}
+                </span>
+                <span className="sp-badge sp-badge--year">
+                  Year {student.year}
+                </span>
+                <span
+                  className={`sp-badge ${
+                    student.status === "Active"
+                      ? "sp-badge--active"
+                      : "sp-badge--irregular"
+                  }`}
+                >
+                  {student.status}
+                </span>
               </div>
-              {[
-                ["Skills", "sp-tag--skill", student.skills],
-                ["Affiliations", "sp-tag--affil", student.affiliations],
-              ].map(([title, cls, arr]) => (
-                <div key={title} className="sp-skills-section">
-                  <span className="sp-section-title">{title}</span>
-                  <div className="sp-tags">
-                    {(arr ?? []).length ? (
-                      arr.map((s) => (
-                        <span key={s} className={`sp-tag ${cls}`}>
-                          {s}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="sp-empty">None recorded.</span>
-                    )}
-                  </div>
-                </div>
-              ))}
             </div>
-          )}
-
-          {tab === "academic" && (
-            <div className="sp-tab-content">
-              {!(student.academicHistory ?? []).length ? (
-                <p className="sp-empty">No academic history recorded.</p>
-              ) : (
-                <table className="sp-table">
-                  <thead>
-                    <tr>
-                      <th>Semester</th>
-                      <th>GWA</th>
-                      <th>Units</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {student.academicHistory.map((h, i) => (
-                      <tr key={i}>
-                        <td>{h.sem}</td>
-                        <td>
-                          <span
-                            className={`sp-gwa ${
-                              parseFloat(h.gwa) <= 1.5
-                                ? "sp-gwa--high"
-                                : parseFloat(h.gwa) <= 2.0
-                                ? "sp-gwa--mid"
-                                : "sp-gwa--low"
-                            }`}
-                          >
-                            {h.gwa}
-                          </span>
-                        </td>
-                        <td>{h.units}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+            <div className="sp-modal-header-actions">
+              <button className="sp-modal-close" onClick={onClose}>
+                <CloseIcon />
+              </button>
             </div>
-          )}
+          </div>
 
-          {tab === "activities" && (
-            <div className="sp-tab-content">
-              {!(student.activities ?? []).length ? (
-                <p className="sp-empty">No activities recorded.</p>
-              ) : (
-                <div className="sp-activity-list">
-                  {student.activities.map((a, i) => (
-                    <div key={i} className="sp-activity-item">
-                      <span className="sp-activity-dot" />
-                      {a}
+          <div className="sp-modal-tabs">
+            {tabs.map((t) => (
+              <button
+                key={t.key}
+                className={`sp-modal-tab ${
+                  tab === t.key ? "sp-modal-tab--active" : ""
+                }`}
+                onClick={() => setTab(t.key)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="sp-modal-body">
+            {tab === "personal" && (
+              <div className="sp-tab-content">
+                <div className="sp-info-grid">
+                  {[
+                    ["Email", student.email],
+                    ["Birthday", student.personalInfo?.birthday || "—"],
+                    ["Contact", student.personalInfo?.contact || "—"],
+                    ["Guardian", student.personalInfo?.guardian || "—"],
+                  ].map(([label, value]) => (
+                    <div key={label} className="sp-info-item">
+                      <span className="sp-info-label">{label}</span>
+                      <span className="sp-info-value">{value}</span>
                     </div>
                   ))}
+                  <div className="sp-info-item sp-info-item--full">
+                    <span className="sp-info-label">Address</span>
+                    <span className="sp-info-value">
+                      {student.personalInfo?.address || "—"}
+                    </span>
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
-
-          {tab === "violations" && (
-            <div className="sp-tab-content">
-              {!(student.violations ?? []).length ? (
-                <div className="sp-no-violations">
-                  <span>✅</span>
-                  <p>No violations on record.</p>
-                </div>
-              ) : (
-                <table className="sp-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Offense</th>
-                      <th>Sanction</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {student.violations.map((v, i) => (
-                      <tr key={i}>
-                        <td>{v.date}</td>
-                        <td>{v.offense}</td>
-                        <td>
-                          <span className="sp-tag sp-tag--violation">
-                            {v.sanction}
+                {[
+                  ["Skills", "sp-tag--skill", student.skills],
+                  ["Affiliations", "sp-tag--affil", student.affiliations],
+                ].map(([title, cls, arr]) => (
+                  <div key={title} className="sp-skills-section">
+                    <span className="sp-section-title">{title}</span>
+                    <div className="sp-tags">
+                      {(arr ?? []).length ? (
+                        arr.map((s) => (
+                          <span key={s} className={`sp-tag ${cls}`}>
+                            {s}
                           </span>
-                        </td>
+                        ))
+                      ) : (
+                        <span className="sp-empty">None recorded.</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {tab === "academic" && (
+              <div className="sp-tab-content">
+                {!(student.academicHistory ?? []).length ? (
+                  <p className="sp-empty">No academic history recorded.</p>
+                ) : (
+                  <table className="sp-table">
+                    <thead>
+                      <tr>
+                        <th>Semester</th>
+                        <th>GWA</th>
+                        <th>Units</th>
                       </tr>
+                    </thead>
+                    <tbody>
+                      {student.academicHistory.map((h, i) => (
+                        <tr key={i}>
+                          <td>{h.sem}</td>
+                          <td>
+                            <span
+                              className={`sp-gwa ${
+                                parseFloat(h.gwa) <= 1.5
+                                  ? "sp-gwa--high"
+                                  : parseFloat(h.gwa) <= 2.0
+                                  ? "sp-gwa--mid"
+                                  : "sp-gwa--low"
+                              }`}
+                            >
+                              {h.gwa}
+                            </span>
+                          </td>
+                          <td>{h.units}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+
+            {tab === "activities" && (
+              <div className="sp-tab-content">
+                {!(student.activities ?? []).length ? (
+                  <p className="sp-empty">No activities recorded.</p>
+                ) : (
+                  <div className="sp-activity-list">
+                    {student.activities.map((a, i) => (
+                      <div key={i} className="sp-activity-item">
+                        <span className="sp-activity-dot" />
+                        {a}
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {tab === "violations" && (
+              <div className="sp-tab-content">
+                {!(student.violations ?? []).length ? (
+                  <div className="sp-no-violations">
+                    <span>✅</span>
+                    <p>No violations on record.</p>
+                  </div>
+                ) : (
+                  <table className="sp-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Offense</th>
+                        <th>Sanction</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {student.violations.map((v, i) => (
+                        <tr key={i}>
+                          <td>{v.date}</td>
+                          <td>{v.offense}</td>
+                          <td>
+                            <span className="sp-tag sp-tag--violation">
+                              {v.sanction}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -997,30 +1011,25 @@ export default function StudentProfiles() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // ID search
   const [idQuery, setIdQuery] = useState("");
   const [idResult, setIdResult] = useState(null);
   const [idSearching, setIdSearching] = useState(false);
 
-  // Filters
   const [filterSkill, setFilterSkill] = useState("");
   const [filterCourse, setFilterCourse] = useState("");
   const [filterYear, setFilterYear] = useState("");
   const [nameSearch, setNameSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Modals
   const [viewStudent, setViewStudent] = useState(null);
   const [editStudent, setEditStudent] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [accountStudent, setAccountStudent] = useState(null);
 
-  // Async states
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // ── READ: fetch all ──────────────────────────────────────
   async function fetchStudents() {
     setLoading(true);
     setError("");
@@ -1038,7 +1047,6 @@ export default function StudentProfiles() {
     fetchStudents();
   }, []);
 
-  // ── READ: search by studentId (Firestore query) ──────────
   async function handleIdSearch(e) {
     e.preventDefault();
     const q = idQuery.trim().toUpperCase();
@@ -1064,7 +1072,6 @@ export default function StudentProfiles() {
     }
   }
 
-  // ── CREATE: add to Firestore ─────────────────────────────
   async function handleAdd(form) {
     setSaving(true);
     try {
@@ -1079,7 +1086,6 @@ export default function StudentProfiles() {
     }
   }
 
-  // ── UPDATE: write changed fields to Firestore ────────────
   async function handleEdit(form) {
     if (!editStudent) return;
     setSaving(true);
@@ -1101,7 +1107,6 @@ export default function StudentProfiles() {
     }
   }
 
-  // ── DELETE: remove document from Firestore ───────────────
   async function handleDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -1118,7 +1123,6 @@ export default function StudentProfiles() {
     }
   }
 
-  // ── Client-side filters (Query 1: skill  Query 2: course) ─
   const allSkills = useMemo(
     () => [...new Set(students.flatMap((s) => s.skills ?? []))].sort(),
     [students]
@@ -1147,6 +1151,7 @@ export default function StudentProfiles() {
   const activeFilters = [filterSkill, filterCourse, filterYear].filter(
     Boolean
   ).length;
+
   function clearFilters() {
     setFilterSkill("");
     setFilterCourse("");
@@ -1154,7 +1159,6 @@ export default function StudentProfiles() {
     setNameSearch("");
   }
 
-  // ── Render ───────────────────────────────────────────────
   return (
     <div className="sp-page">
       {error && (
@@ -1166,7 +1170,7 @@ export default function StudentProfiles() {
         </div>
       )}
 
-      {/* ── ID Search (Firestore query by studentId) ────────── */}
+      {/* ── ID Search ── */}
       <section className="sp-id-section">
         <div className="sp-id-header">
           <IdIcon />
@@ -1198,7 +1202,7 @@ export default function StudentProfiles() {
         />
       </section>
 
-      {/* ── Toolbar ─────────────────────────────────────────── */}
+      {/* ── Toolbar ── */}
       <div className="sp-toolbar">
         <div className="sp-search-wrap">
           <SearchIcon />
@@ -1250,7 +1254,7 @@ export default function StudentProfiles() {
         </div>
       </div>
 
-      {/* ── Filter Panel ────────────────────────────────────── */}
+      {/* ── Filter Panel ── */}
       {showFilters && (
         <div className="sp-filter-panel">
           {[
@@ -1332,7 +1336,7 @@ export default function StudentProfiles() {
         </div>
       )}
 
-      {/* ── Table ───────────────────────────────────────────── */}
+      {/* ── Table ── */}
       <div className="sp-table-wrap">
         {loading ? (
           <div className="sp-loading">
@@ -1452,7 +1456,7 @@ export default function StudentProfiles() {
         )}
       </div>
 
-      {/* ── Modals ──────────────────────────────────────────── */}
+      {/* ── Modals ── */}
       {viewStudent && (
         <StudentModal
           student={viewStudent}
@@ -1488,9 +1492,7 @@ export default function StudentProfiles() {
         <CreateAccountModal
           student={accountStudent}
           onClose={() => setAccountStudent(null)}
-          onSuccess={() => {
-            // optionally show a toast or just let the modal handle it
-          }}
+          onSuccess={() => {}}
         />
       )}
     </div>

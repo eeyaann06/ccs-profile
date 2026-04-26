@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "../config/firebase";
+import { secondaryAuth, db } from "../config/firebase";
 
 const USERS = [
   {
@@ -56,9 +56,9 @@ export default function SeedPage() {
       try {
         // 1. Create Firebase Auth user
         const { user: firebaseUser } = await createUserWithEmailAndPassword(
-          auth,
+          secondaryAuth,
           email,
-          user.password
+          user.password // 👈 was: auth
         );
         log(`✓ Auth created: ${email}`, "success");
 
