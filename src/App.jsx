@@ -5,6 +5,8 @@ import Login from "./pages/login";
 import SeedPage from "./pages/SeedPage";
 import StudentProfiles from "./pages/StudentProfiles";
 import FacultyProfiles from "./pages/FacultyProfiles";
+import Events from "./pages/Events";
+import Research from "./pages/CollegeResearch";
 import "./App.css";
 
 // ─── Route Guards ──────────────────────────────────────────
@@ -49,14 +51,11 @@ function NotFound() {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Root redirect */}
       <Route path="/" element={<Navigate to="/login" replace />} />
 
-      {/* Public */}
       <Route path="/login" element={<Login />} />
       <Route path="/seed" element={<SeedPage />} />
 
-      {/* Admin — nested under AdminLayout */}
       <Route
         path="/admin"
         element={
@@ -78,16 +77,7 @@ function AppRoutes() {
         />
         <Route path="students" element={<StudentProfiles />} />
         <Route path="faculty" element={<FacultyProfiles />} />
-        <Route
-          path="events"
-          element={
-            <Placeholder
-              icon="📅"
-              title="Events"
-              description="Manage upcoming college events."
-            />
-          }
-        />
+        <Route path="events" element={<Events />} /> {/* 👈 swapped */}
         <Route
           path="scheduling"
           element={
@@ -98,16 +88,7 @@ function AppRoutes() {
             />
           }
         />
-        <Route
-          path="research"
-          element={
-            <Placeholder
-              icon="🔬"
-              title="College Research"
-              description="Track ongoing research projects."
-            />
-          }
-        />
+        <Route path="research" element={<Research />} />
         <Route
           path="syllabus"
           element={
@@ -140,7 +121,6 @@ function AppRoutes() {
         />
       </Route>
 
-      {/* Faculty & Student placeholders */}
       <Route
         path="/faculty"
         element={
