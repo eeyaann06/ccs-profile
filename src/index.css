@@ -1,0 +1,142 @@
+/* ============================================================
+   src/index.css — Global reset + orange theme variables
+   ============================================================ */
+
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=DM+Sans:wght@300;400;500;600&display=swap");
+
+/* ── CSS Custom Properties ────────────────────────────────── */
+:root {
+  --clr-orange: #f97316;
+  --clr-orange-dark: #c2410c;
+  --clr-orange-deep: #7c2d12;
+  --clr-amber: #fbbf24;
+  --clr-muted: #d97706;
+
+  --clr-bg: #0d0905;
+  --clr-surface: #180d06;
+  --clr-surface-2: #211208;
+  --clr-border: rgba(249, 115, 22, 0.16);
+  --clr-border-focus: rgba(249, 115, 22, 0.55);
+
+  --clr-text: #fef3c7;
+  --clr-text-sub: #92400e;
+  --clr-text-muted: #d97706;
+  --clr-error-bg: rgba(69, 10, 10, 0.6);
+  --clr-error-border: rgba(248, 113, 113, 0.5);
+  --clr-error-text: #fca5a5;
+
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "DM Sans", "Segoe UI", sans-serif;
+  --font-mono: "Courier New", Courier, monospace;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+  --radius-full: 999px;
+
+  --shadow-glow: 0 0 60px rgba(249, 115, 22, 0.15),
+    0 20px 40px rgba(0, 0, 0, 0.5);
+  --shadow-btn: 0 4px 20px rgba(249, 115, 22, 0.45);
+  --shadow-input: 0 0 0 3px rgba(249, 115, 22, 0.18);
+}
+
+/* ── Reset ────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--clr-bg);
+  color: var(--clr-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--clr-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--clr-orange-deep);
+  border-radius: 3px;
+}
+
+/* ── Selection ────────────────────────────────────────────── */
+::selection {
+  background: rgba(249, 115, 22, 0.3);
+  color: var(--clr-text);
+}
+
+/* ── Global keyframe animations ───────────────────────────── */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.75;
+  }
+}
+
+@keyframes floatDot {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes borderGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(249, 115, 22, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(249, 115, 22, 0.5);
+  }
+}

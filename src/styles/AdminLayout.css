@@ -1,0 +1,28 @@
+/* ============================================================
+   AdminLayout.css
+   ============================================================ */
+
+.admin-layout {
+  min-height: 100vh;
+  background: var(--clr-bg);
+}
+
+.admin-main {
+  transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-content {
+  margin-top: 68px; /* header height */
+  padding: 2rem;
+  flex: 1;
+  animation: fadeUp 0.35s ease both;
+}
+
+@media (max-width: 768px) {
+  .admin-content {
+    padding: 1.25rem;
+  }
+}

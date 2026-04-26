@@ -1,0 +1,73 @@
+/* ============================================================
+   src/App.css — App-level styles (orange theme)
+   ============================================================ */
+
+/* ── App shell ────────────────────────────────────────────── */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PLACEHOLDER / DASHBOARD PAGES
+   (replace with real page components as you build them)
+   ══════════════════════════════════════════════════════════════ */
+.placeholder-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+  background: var(--clr-bg);
+  animation: fadeUp 0.5s ease both;
+}
+
+.placeholder-icon {
+  font-size: 4rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 20px rgba(249, 115, 22, 0.4));
+}
+
+.placeholder-page h1 {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--clr-text);
+  background: linear-gradient(135deg, var(--clr-orange), var(--clr-amber));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.placeholder-page p {
+  font-size: 1rem;
+  color: var(--clr-text-muted);
+  max-width: 400px;
+  font-weight: 300;
+  line-height: 1.7;
+}
+
+/* back link */
+.app-back-link {
+  margin-top: 1rem;
+  padding: 0.65rem 1.75rem;
+  border: 1.5px solid rgba(249, 115, 22, 0.45);
+  border-radius: var(--radius-md);
+  color: var(--clr-orange);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  font-family: var(--font-body);
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.app-back-link:hover {
+  background: rgba(249, 115, 22, 0.1);
+  border-color: var(--clr-orange);
+  transform: translateY(-2px);
+}
