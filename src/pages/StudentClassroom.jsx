@@ -1,100 +1,491 @@
 // src/pages/StudentClassroom.jsx
 // ─────────────────────────────────────────────────────────────
-// Student Portal — Weekly Class Schedule
-//   Reads the student's section from the `students` collection,
-//   then queries `schedules` where sectionName == that section.
-//   Displays a timetable grouped by day.
+// Student Portal — Weekly Class Schedule + Lesson Viewer
+//   • Calendar/List view of the student's section schedule
+//   • Clicking a class opens a read-only classroom showing
+//     only APPROVED lessons posted by the faculty for that
+//     section + subject
 // ─────────────────────────────────────────────────────────────
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { useAuth } from "../context/AuthContext";
 import "../styles/StudentPages.css";
 
 // ── Constants ─────────────────────────────────────────────────
-const DAYS_ORDER = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const HOUR_START = 7;
+const HOUR_END = 21;
+
+const LESSON_TYPES = ["Lecture", "Lab", "Workshop", "Discussion", "Assessment"];
+
+const PALETTE = [
+  "#6366f1",
+  "#0ea5e9",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#ec4899",
+  "#06b6d4",
+  "#84cc16",
+  "#f97316",
 ];
 
-const TYPE_COLORS = {
-  Lecture: {
-    bg: "rgba(99,102,241,.15)",
-    text: "#a5b4fc",
-    border: "rgba(99,102,241,.3)",
-  },
-  Lab: {
-    bg: "rgba(34,197,94,.12)",
-    text: "#86efac",
-    border: "rgba(34,197,94,.3)",
-  },
-  PE: {
-    bg: "rgba(236,72,153,.12)",
-    text: "#f9a8d4",
-    border: "rgba(236,72,153,.3)",
-  },
-  Online: {
-    bg: "rgba(251,191,36,.12)",
-    text: "#fde68a",
-    border: "rgba(251,191,36,.3)",
-  },
-  Hybrid: {
-    bg: "rgba(20,184,166,.12)",
-    text: "#99f6e4",
-    border: "rgba(20,184,166,.3)",
-  },
-};
+// ── Helpers ───────────────────────────────────────────────────
+function toMins(t = "00:00") {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+function fmt12(t) {
+  if (!t) return "—";
+  const [h, m] = t.split(":").map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${
+    h >= 12 ? "PM" : "AM"
+  }`;
+}
 
-function typeStyle(type) {
-  return (
-    TYPE_COLORS[type] ?? {
-      bg: "rgba(148,163,184,.12)",
-      text: "#cbd5e1",
-      border: "rgba(148,163,184,.3)",
+// ── SVG Icons ─────────────────────────────────────────────────
+const Ico = ({ d, size = 16, sw = 2 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={sw}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {d}
+  </svg>
+);
+const IcoChevL = () => (
+  <Ico size={16} d={<polyline points="15 18 9 12 15 6" />} />
+);
+const IcoRefresh = () => (
+  <Ico
+    size={14}
+    d={
+      <>
+        <polyline points="23 4 23 10 17 10" />
+        <polyline points="1 20 1 14 7 14" />
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+      </>
     }
+  />
+);
+const IcoDL = () => (
+  <Ico
+    size={14}
+    d={
+      <>
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" y1="15" x2="12" y2="3" />
+      </>
+    }
+  />
+);
+const IcoUsers = () => (
+  <Ico
+    size={14}
+    d={
+      <>
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+      </>
+    }
+  />
+);
+const IcoBook = () => (
+  <Ico
+    size={20}
+    d={
+      <>
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+      </>
+    }
+  />
+);
+
+function Spinner() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      style={{
+        animation: "fcc-spin 0.8s linear infinite",
+        display: "inline-block",
+      }}
+    >
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
   );
 }
 
-const SUBJECT_PALETTE = [
-  "#f97316",
-  "#6366f1",
-  "#22c55e",
-  "#ec4899",
-  "#14b8a6",
-  "#eab308",
-  "#8b5cf6",
-  "#06b6d4",
-];
-function subjectColor(code = "") {
-  let n = 0;
-  for (let i = 0; i < code.length; i++) n += code.charCodeAt(i);
-  return SUBJECT_PALETTE[n % SUBJECT_PALETTE.length];
+// ── Color helpers ─────────────────────────────────────────────
+function buildColorMap(schedules) {
+  const map = {};
+  [...new Set(schedules.map((s) => s.subjectCode))].forEach((code, i) => {
+    map[code] = PALETTE[i % PALETTE.length];
+  });
+  return map;
 }
 
-function formatTime(t) {
-  if (!t) return "—";
-  const [h, m] = t.split(":");
-  const hr = parseInt(h);
-  return `${hr % 12 || 12}:${m} ${hr < 12 ? "AM" : "PM"}`;
+// ── Student Lesson Viewer (read-only classroom) ───────────────
+function StudentLessonView({ schedule, colorMap, onBack }) {
+  const accentColor = colorMap[schedule.subjectCode] ?? PALETTE[0];
+
+  const [lessons, setLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState("");
+
+  const fetchLessons = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Query approved lessons for this section + subject
+      const q = query(
+        collection(db, "lessons"),
+        where("section_name", "==", schedule.sectionName),
+        where("subject_code", "==", schedule.subjectCode),
+        where("status", "==", "Approved")
+      );
+      const snap = await getDocs(q);
+      setLessons(
+        snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .sort(
+            (a, b) =>
+              (b.created_at?.seconds ?? 0) - (a.created_at?.seconds ?? 0)
+          )
+      );
+    } catch {
+      /* silent */
+    } finally {
+      setLoading(false);
+    }
+  }, [schedule.sectionName, schedule.subjectCode]);
+
+  useEffect(() => {
+    fetchLessons();
+  }, [fetchLessons]);
+
+  const filtered = useMemo(
+    () =>
+      filterType
+        ? lessons.filter((l) => l.lesson_type === filterType)
+        : lessons,
+    [lessons, filterType]
+  );
+
+  return (
+    <div className="fcc-classroom">
+      {/* Header */}
+      <div className="fcc-cr-header" style={{ "--accent": accentColor }}>
+        <button className="fcc-back-btn" onClick={onBack}>
+          <IcoChevL /> Back to Schedule
+        </button>
+        <div className="fcc-cr-hero">
+          <div className="fcc-cr-icon-wrap" style={{ background: accentColor }}>
+            <IcoBook />
+          </div>
+          <div className="fcc-cr-info">
+            <h1 className="fcc-cr-subject">{schedule.subjectName}</h1>
+            <div className="fcc-cr-meta">
+              <span
+                className="fcc-cr-badge"
+                style={{ background: accentColor + "22", color: accentColor }}
+              >
+                {schedule.subjectCode}
+              </span>
+              <span className="fcc-cr-sep">·</span>
+              <IcoUsers />
+              <span>{schedule.sectionName}</span>
+              <span className="fcc-cr-sep">·</span>
+              <span>🏫 {schedule.room || "TBA"}</span>
+              <span className="fcc-cr-sep">·</span>
+              <span>
+                ⏰ {fmt12(schedule.timeStart)} – {fmt12(schedule.timeEnd)}
+              </span>
+              <span className="fcc-cr-sep">·</span>
+              <span>👨‍🏫 {schedule.facultyName || "—"}</span>
+              <span className="fcc-cr-sep">·</span>
+              <span>📅 {(schedule.days ?? []).join(", ")}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="fcc-cr-toolbar">
+        <div className="fcc-cr-toolbar-left">
+          <span className="fcc-cr-count">
+            {filtered.length} lesson{filtered.length !== 1 ? "s" : ""}
+          </span>
+          <select
+            className="fcc-sel"
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+          >
+            <option value="">All Types</option>
+            {LESSON_TYPES.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+        <div className="fcc-cr-toolbar-right">
+          <button
+            className="fcc-btn fcc-btn--ghost fcc-btn--sm"
+            onClick={fetchLessons}
+          >
+            <IcoRefresh />
+          </button>
+        </div>
+      </div>
+
+      {/* Lessons */}
+      <div className="fcc-cr-lessons">
+        {loading ? (
+          <div className="fcc-loading">
+            <Spinner />
+            <span>Loading lessons…</span>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="fcc-empty">
+            <span>📚</span>
+            <p>
+              {lessons.length === 0
+                ? "No lessons available yet."
+                : "No matches for selected type."}
+            </p>
+            {lessons.length === 0 && (
+              <p
+                style={{
+                  fontSize: "0.8rem",
+                  color: "#64748b",
+                  marginTop: "0.25rem",
+                }}
+              >
+                Your faculty hasn't posted any approved lessons for this subject
+                yet.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="fcc-lessons-grid">
+            {filtered.map((l) => (
+              <div key={l.id} className="fcc-lesson-card">
+                <div className="fcc-lc-top">
+                  <div
+                    className="fcc-lc-strip"
+                    style={{ background: accentColor }}
+                  />
+                  <div className="fcc-lc-badges">
+                    <span className="fcc-badge fcc-badge--type">
+                      {l.lesson_type}
+                    </span>
+                    {/* No status badge for students — only Approved shown */}
+                  </div>
+                </div>
+                <h3 className="fcc-lc-title">{l.title}</h3>
+                {l.description && (
+                  <p className="fcc-lc-desc">{l.description}</p>
+                )}
+                {l.objectives && (
+                  <div
+                    style={{
+                      fontSize: "0.78rem",
+                      color: "#94a3b8",
+                      marginTop: "0.4rem",
+                      padding: "0.5rem 0.75rem",
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      borderRadius: 8,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        color: "#64748b",
+                        display: "block",
+                        marginBottom: "0.2rem",
+                        fontSize: "0.68rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.07em",
+                      }}
+                    >
+                      Objectives
+                    </span>
+                    {l.objectives}
+                  </div>
+                )}
+                <div className="fcc-lc-actions">
+                  {l.file_url && (
+                    <a
+                      className="fcc-icon-btn fcc-icon-btn--dl"
+                      href={l.file_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Download Lesson File"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.35rem",
+                        fontSize: "0.78rem",
+                      }}
+                    >
+                      <IcoDL />
+                      <span>{l.file_name || "Download"}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
-function today() {
-  return [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ][new Date().getDay()];
+// ── Week Calendar ─────────────────────────────────────────────
+function WeekCalendar({ schedules, colorMap, onSelect }) {
+  const TOTAL = (HOUR_END - HOUR_START) * 60;
+  const hours = Array.from(
+    { length: HOUR_END - HOUR_START + 1 },
+    (_, i) => HOUR_START + i
+  );
+
+  return (
+    <div className="fcc-cal">
+      {/* Time gutter */}
+      <div className="fcc-cal-gutter">
+        <div className="fcc-cal-corner" />
+        {hours.map((h) => (
+          <div key={h} className="fcc-cal-hour">
+            {h === 12 ? "12 PM" : h < 12 ? `${h} AM` : `${h - 12} PM`}
+          </div>
+        ))}
+      </div>
+
+      {/* Day columns */}
+      {DAYS.map((day) => {
+        const dayScheds = schedules.filter((s) => (s.days ?? []).includes(day));
+        return (
+          <div key={day} className="fcc-cal-day">
+            <div className="fcc-cal-day-hd">{day}</div>
+            <div className="fcc-cal-day-body">
+              {hours.map((h) => (
+                <div key={h} className="fcc-cal-cell" />
+              ))}
+              {dayScheds.map((s, i) => {
+                const start = toMins(s.timeStart) - HOUR_START * 60;
+                const end = toMins(s.timeEnd) - HOUR_START * 60;
+                const top = (start / TOTAL) * 100;
+                const height = Math.max(((end - start) / TOTAL) * 100, 3);
+                const color = colorMap[s.subjectCode] ?? PALETTE[0];
+                return (
+                  <button
+                    key={i}
+                    className="fcc-cal-block"
+                    title={`${s.subjectName} — click to view lessons`}
+                    style={{
+                      top: `${top}%`,
+                      height: `${height}%`,
+                      background: color,
+                    }}
+                    onClick={() => onSelect(s)}
+                  >
+                    <span className="fcc-cal-code">{s.subjectCode}</span>
+                    <span className="fcc-cal-sec">{s.sectionName}</span>
+                    <span className="fcc-cal-room">{s.room}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
-// ── Main ──────────────────────────────────────────────────────
+// ── Schedule List ─────────────────────────────────────────────
+function ScheduleList({ schedules, colorMap, onSelect }) {
+  const byDay = useMemo(() => {
+    const map = Object.fromEntries(DAYS.map((d) => [d, []]));
+    schedules.forEach((s) =>
+      (s.days ?? []).forEach((d) => {
+        if (map[d]) map[d].push(s);
+      })
+    );
+    return map;
+  }, [schedules]);
+
+  return (
+    <div className="fcc-list">
+      {DAYS.map((day) =>
+        byDay[day].length === 0 ? null : (
+          <div key={day} className="fcc-list-day">
+            <div className="fcc-list-day-hd">
+              <span className="fcc-list-day-dot" />
+              {day}
+              <span className="fcc-list-day-ct">{byDay[day].length}</span>
+            </div>
+            {byDay[day]
+              .sort((a, b) =>
+                (a.timeStart ?? "").localeCompare(b.timeStart ?? "")
+              )
+              .map((s, i) => {
+                const color = colorMap[s.subjectCode] ?? PALETTE[0];
+                return (
+                  <button
+                    key={i}
+                    className="fcc-list-entry"
+                    onClick={() => onSelect(s)}
+                  >
+                    <div
+                      className="fcc-le-strip"
+                      style={{ background: color }}
+                    />
+                    <div className="fcc-le-time">
+                      <span>{fmt12(s.timeStart)}</span>
+                      <span className="fcc-le-sep">–</span>
+                      <span>{fmt12(s.timeEnd)}</span>
+                    </div>
+                    <div className="fcc-le-main">
+                      <span className="fcc-le-code" style={{ color }}>
+                        {s.subjectCode}
+                      </span>
+                      <span className="fcc-le-name">{s.subjectName}</span>
+                    </div>
+                    <div className="fcc-le-meta">
+                      <span>👨‍🏫 {s.facultyName || "—"}</span>
+                      <span>🏫 {s.room || "TBA"}</span>
+                    </div>
+                    <div className="fcc-le-arrow">›</div>
+                  </button>
+                );
+              })}
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+//  MAIN EXPORT
+// ══════════════════════════════════════════════════════════════
 export default function StudentClassroom() {
   const { currentUser } = useAuth();
   const studentId = currentUser?.user_id?.replace(/^USR-/, "") ?? "";
@@ -103,392 +494,248 @@ export default function StudentClassroom() {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filterDay, setFilterDay] = useState("All");
+  const [view, setView] = useState("calendar"); // "calendar" | "list"
+  const [classroom, setClassroom] = useState(null); // selected schedule
 
-  const todayDay = today();
-
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!studentId) return;
-    async function load() {
-      setLoading(true);
-      setError("");
-      try {
-        // 1. Get student's section
-        const stuSnap = await getDocs(
-          query(collection(db, "students"), where("studentId", "==", studentId))
-        );
-        if (stuSnap.empty) {
-          setError("Student record not found.");
-          return;
-        }
-        const stu = stuSnap.docs[0].data();
-        const sec = stu.section ?? "";
-        setSection(sec);
-
-        if (!sec) {
-          setError("No section assigned yet. Contact your administrator.");
-          return;
-        }
-
-        // 2. Get schedules for that section
-        const schedSnap = await getDocs(
-          query(collection(db, "schedules"), where("sectionName", "==", sec))
-        );
-        const data = schedSnap.docs
-          .map((d) => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => (a.timeStart ?? "").localeCompare(b.timeStart ?? ""));
-        setSchedules(data);
-      } catch (err) {
-        setError("Failed to load schedule: " + err.message);
-      } finally {
-        setLoading(false);
+    setLoading(true);
+    setError("");
+    try {
+      // 1. Get student's section
+      const stuSnap = await getDocs(
+        query(collection(db, "students"), where("studentId", "==", studentId))
+      );
+      if (stuSnap.empty) {
+        setError("Student record not found.");
+        return;
       }
+      const stu = stuSnap.docs[0].data();
+      const sec = stu.section ?? "";
+      setSection(sec);
+
+      if (!sec) {
+        setError("No section assigned yet. Contact your administrator.");
+        return;
+      }
+
+      // 2. Get schedules for that section
+      const schedSnap = await getDocs(
+        query(collection(db, "schedules"), where("sectionName", "==", sec))
+      );
+      setSchedules(schedSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    } catch (err) {
+      setError("Failed to load schedule: " + err.message);
+    } finally {
+      setLoading(false);
     }
-    load();
   }, [studentId]);
 
-  // Filter by selected day
-  const activeDays = useMemo(
-    () =>
-      DAYS_ORDER.filter((d) =>
-        schedules.some((s) => (s.days ?? []).includes(d))
-      ),
-    [schedules]
-  );
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const visibleDays = filterDay === "All" ? activeDays : [filterDay];
+  const colorMap = useMemo(() => buildColorMap(schedules), [schedules]);
 
-  // Summary counts
+  // Summary
   const totalSubjects = new Set(schedules.map((s) => s.subjectCode)).size;
 
+  // ── Classroom / lesson view ───────────────────────────────
+  if (classroom) {
+    return (
+      <StudentLessonView
+        schedule={classroom}
+        colorMap={colorMap}
+        onBack={() => setClassroom(null)}
+      />
+    );
+  }
+
+  // ── Schedule view ─────────────────────────────────────────
   return (
-    <div className="stu-page">
-      {/* ── Section info ─────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "0.75rem",
-          marginBottom: "0.25rem",
-        }}
-      >
+    <div className="fcc-page">
+      {/* Page header */}
+      <div className="fcc-page-hd">
         <div>
-          <p style={{ margin: 0, fontSize: "0.85rem", color: "#94a3b8" }}>
+          <h1 className="fcc-page-title">My Schedule</h1>
+          <p className="fcc-page-sub">
             {loading ? (
               "Loading…"
             ) : section ? (
               <>
-                Your class schedule for{" "}
-                <strong style={{ color: "#f97316" }}>Section {section}</strong>
+                Class schedule for{" "}
+                <strong style={{ color: "#f97316" }}>Section {section}</strong>{" "}
+                — click any class to view lessons.
               </>
             ) : (
               "No section assigned."
             )}
           </p>
         </div>
-        {!loading && schedules.length > 0 && (
-          <div style={{ display: "flex", gap: "0.75rem" }}>
-            {[
-              { label: "Subjects", value: totalSubjects, color: "#f97316" },
-              { label: "Sessions", value: schedules.length, color: "#6366f1" },
-            ].map((s) => (
-              <div
-                key={s.label}
-                style={{
-                  background: `${s.color}10`,
-                  border: `1px solid ${s.color}28`,
-                  borderRadius: 8,
-                  padding: "0.35rem 0.85rem",
-                  textAlign: "center",
-                }}
-              >
+
+        <div className="fcc-page-hd-right">
+          {/* Summary badges */}
+          {!loading && schedules.length > 0 && (
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              {[
+                { label: "Subjects", value: totalSubjects, color: "#f97316" },
+                {
+                  label: "Sessions",
+                  value: schedules.length,
+                  color: "#6366f1",
+                },
+              ].map((s) => (
                 <div
+                  key={s.label}
                   style={{
-                    fontSize: "1.1rem",
-                    fontWeight: 800,
-                    color: s.color,
-                    lineHeight: 1,
+                    background: `${s.color}10`,
+                    border: `1px solid ${s.color}28`,
+                    borderRadius: 8,
+                    padding: "0.3rem 0.75rem",
+                    textAlign: "center",
                   }}
                 >
-                  {s.value}
-                </div>
-                <div
-                  style={{
-                    fontSize: "0.68rem",
-                    color: "#94a3b8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                  }}
-                >
-                  {s.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Error ────────────────────────────────────── */}
-      {error && <div className="stu-alert stu-alert--error">⚠ {error}</div>}
-
-      {/* ── Day filter ───────────────────────────────── */}
-      {!loading && schedules.length > 0 && (
-        <div className="stu-cls-toolbar">
-          <div className="stu-cls-filter-group">
-            {["All", ...activeDays].map((d) => (
-              <button
-                key={d}
-                className={`stu-cls-filter-btn${
-                  filterDay === d ? " stu-cls-filter-btn--active" : ""
-                }`}
-                onClick={() => setFilterDay(d)}
-              >
-                {d === todayDay ? `${d} ★` : d}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Loading ──────────────────────────────────── */}
-      {loading && (
-        <div className="stu-center">
-          <div className="stu-spinner" />
-          <span style={{ color: "#94a3b8" }}>Loading schedule…</span>
-        </div>
-      )}
-
-      {/* ── Empty ────────────────────────────────────── */}
-      {!loading && !error && schedules.length === 0 && (
-        <div className="stu-timetable">
-          <div className="stu-cls-empty">
-            <span>📋</span>
-            No schedule entries found for your section yet.
-            <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
-              Your administrator hasn't assigned schedules for Section {section}{" "}
-              yet.
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* ── Timetable ────────────────────────────────── */}
-      {!loading && schedules.length > 0 && (
-        <div className="stu-timetable">
-          {/* Column headers */}
-          <div className="stu-sched-row-header">
-            <div>Time</div>
-            <div>Subject</div>
-            <div>Faculty</div>
-            <div>Room</div>
-            <div>Type</div>
-          </div>
-
-          {visibleDays.map((day) => {
-            const dayScheds = schedules.filter((s) =>
-              (s.days ?? []).includes(day)
-            );
-            return (
-              <div key={day} className="stu-day-section">
-                {/* Day header */}
-                <div className="stu-day-header">
                   <div
-                    className="stu-day-dot"
-                    style={
-                      day === todayDay
-                        ? {}
-                        : {
-                            background: "#6366f1",
-                            boxShadow: "0 0 6px rgba(99,102,241,.6)",
-                          }
-                    }
-                  />
-                  {day}
-                  {day === todayDay && (
-                    <span
-                      style={{
-                        background: "#f97316",
-                        color: "#fff",
-                        fontSize: "0.6rem",
-                        borderRadius: "99px",
-                        padding: "1px 6px",
-                        fontWeight: 800,
-                      }}
-                    >
-                      TODAY
-                    </span>
-                  )}
-                  <span
                     style={{
-                      marginLeft: "auto",
-                      fontSize: "0.7rem",
-                      color: "#64748b",
-                      fontWeight: 400,
+                      fontSize: "1rem",
+                      fontWeight: 800,
+                      color: s.color,
+                      lineHeight: 1,
                     }}
                   >
-                    {dayScheds.length} class{dayScheds.length !== 1 ? "es" : ""}
-                  </span>
+                    {s.value}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "#94a3b8",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    {s.label}
+                  </div>
                 </div>
+              ))}
+            </div>
+          )}
 
-                {/* Schedule rows */}
-                <div className="stu-day-entries">
-                  {dayScheds.length === 0 ? (
-                    <div
-                      style={{
-                        padding: "0.75rem 1rem",
-                        fontSize: "0.8rem",
-                        color: "#64748b",
-                      }}
-                    >
-                      No classes this day.
-                    </div>
-                  ) : (
-                    dayScheds.map((s) => {
-                      const ts = typeStyle(s.type);
-                      const sc = subjectColor(s.subjectCode);
-                      return (
-                        <div key={s.id} className="stu-sched-row">
-                          {/* Time */}
-                          <div className="stu-sched-time">
-                            <div>{formatTime(s.timeStart)}</div>
-                            <div
-                              style={{ color: "#64748b", fontSize: "0.7rem" }}
-                            >
-                              –{formatTime(s.timeEnd)}
-                            </div>
-                          </div>
+          <button
+            className="fcc-btn fcc-btn--ghost fcc-btn--sm"
+            onClick={fetchData}
+          >
+            <IcoRefresh />
+          </button>
 
-                          {/* Subject */}
-                          <div className="stu-sched-subject">
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "0.4rem",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  width: 3,
-                                  height: 28,
-                                  borderRadius: 99,
-                                  background: sc,
-                                  flexShrink: 0,
-                                }}
-                              />
-                              <div>
-                                <div
-                                  className="stu-sched-code"
-                                  style={{ color: sc }}
-                                >
-                                  {s.subjectCode}
-                                </div>
-                                <div className="stu-sched-sname">
-                                  {s.subjectName}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+          {/* View toggle */}
+          <div className="fcc-view-toggle">
+            <button
+              className={`fcc-vt-btn ${
+                view === "calendar" ? "fcc-vt-btn--on" : ""
+              }`}
+              onClick={() => setView("calendar")}
+              title="Calendar"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+            </button>
+            <button
+              className={`fcc-vt-btn ${
+                view === "list" ? "fcc-vt-btn--on" : ""
+              }`}
+              onClick={() => setView("list")}
+              title="List"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
 
-                          {/* Faculty */}
-                          <div className="stu-sched-faculty">
-                            {s.facultyName || "—"}
-                          </div>
+      {/* Error */}
+      {error && <div className="fcc-alert">⚠ {error}</div>}
 
-                          {/* Room */}
-                          <div className="stu-sched-room">
-                            <span style={{ marginRight: "0.25rem" }}>📍</span>
-                            {s.room || "TBA"}
-                          </div>
-
-                          {/* Type badge */}
-                          <div>
-                            <span
-                              className="stu-sched-type-tag"
-                              style={{
-                                background: ts.bg,
-                                color: ts.text,
-                                border: `1px solid ${ts.border}`,
-                              }}
-                            >
-                              {s.type || "Lecture"}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+      {/* Subject legend */}
+      {!loading && schedules.length > 0 && (
+        <div className="fcc-legend">
+          {[...new Set(schedules.map((s) => s.subjectCode))].map((code) => {
+            const s = schedules.find((x) => x.subjectCode === code);
+            return (
+              <div key={code} className="fcc-legend-item">
+                <div
+                  className="fcc-legend-dot"
+                  style={{ background: colorMap[code] }}
+                />
+                <span className="fcc-legend-code">{code}</span>
+                <span className="fcc-legend-name">{s?.subjectName}</span>
               </div>
             );
           })}
         </div>
       )}
 
-      {/* ── Subject legend ────────────────────────────── */}
+      {/* Click hint */}
       {!loading && schedules.length > 0 && (
-        <div
-          style={{
-            background: "rgba(255,255,255,.04)",
-            border: "1px solid rgba(255,255,255,.07)",
-            borderRadius: 12,
-            padding: "1rem 1.25rem",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "0.72rem",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              color: "#64748b",
-              marginBottom: "0.6rem",
-            }}
-          >
-            Subject Legend
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-            {[
-              ...new Map(schedules.map((s) => [s.subjectCode, s])).values(),
-            ].map((s) => {
-              const c = subjectColor(s.subjectCode);
-              return (
-                <div
-                  key={s.subjectCode}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.4rem",
-                    background: `${c}10`,
-                    border: `1px solid ${c}28`,
-                    borderRadius: 99,
-                    padding: "0.25rem 0.75rem",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      background: c,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span
-                    style={{ fontSize: "0.78rem", fontWeight: 600, color: c }}
-                  >
-                    {s.subjectCode}
-                  </span>
-                  <span style={{ fontSize: "0.73rem", color: "#94a3b8" }}>
-                    {s.subjectName}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+        <div className="fcc-hint-bar">
+          💡 Click any class block to view the lessons posted by your faculty.
         </div>
+      )}
+
+      {/* Content */}
+      {loading ? (
+        <div className="fcc-loading">
+          <Spinner />
+          <span>Loading schedule…</span>
+        </div>
+      ) : schedules.length === 0 && !error ? (
+        <div className="fcc-empty">
+          <span>📅</span>
+          <p>No schedule found for your section yet.</p>
+          <p className="fcc-empty-sub">
+            Your administrator will assign your classes and time slots.
+          </p>
+        </div>
+      ) : view === "calendar" ? (
+        <div className="fcc-cal-wrap">
+          <WeekCalendar
+            schedules={schedules}
+            colorMap={colorMap}
+            onSelect={setClassroom}
+          />
+        </div>
+      ) : (
+        <ScheduleList
+          schedules={schedules}
+          colorMap={colorMap}
+          onSelect={setClassroom}
+        />
       )}
     </div>
   );
