@@ -29,7 +29,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import StudentMyProfile from "./pages/StudentMyProfile";
 import StudentClassroom from "./pages/StudentClassroom";
 import StudentEvents from "./pages/StudentEvents";
-import AdminReports from "./pages/AdminReports";
+import AdminReports from "./pages/Adminreports";
 import FacultyReports from "./pages/FacultyReports";
 import StudentReports from "./pages/StudentReports";
 import "./App.css";
