@@ -115,16 +115,6 @@ function AppRoutes() {
           <Route path="curriculum" element={<Curriculum />} />
           <Route path="schedule" element={<Scheduling />} />
           <Route path="syllabus" element={<AdminSyllabus />} />
-          <Route
-            path="lessons"
-            element={
-              <Placeholder
-                icon="📝"
-                title="Lessons"
-                description="Faculty upload and manage lesson materials."
-              />
-            }
-          />
           <Route path="events" element={<Events />} />
           <Route path="research" element={<Research />} />
         </Route>
