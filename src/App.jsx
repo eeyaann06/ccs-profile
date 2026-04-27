@@ -1,15 +1,49 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+// src/App.jsx
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
+import { useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import AdminLayout from "./layouts/AdminLayout";
+import FacultyLayout from "./layouts/FacultyLayout";
+import StudentLayout from "./layouts/StudentLayout"; // ← NEW
 import Login from "./pages/login";
 import SeedPage from "./pages/SeedPage";
 import StudentProfiles from "./pages/StudentProfiles";
 import FacultyProfiles from "./pages/FacultyProfiles";
 import Events from "./pages/Events";
+import FacultyEvents from "./pages/FacultyEvents";
+import Curriculum from "./pages/Curriculum";
+import Scheduling from "./pages/Scheduling";
 import Research from "./pages/CollegeResearch";
+import FacultyMyProfile from "./pages/FacultyMyProfile";
+import AdminSyllabus from "./pages/AdminSyllabus";
+import FacultySyllabus from "./pages/FacultySyllabus";
+import FacultyClassroomCalendar from "./pages/FacultyClassroomCalendar";
+import AdminDashboard from "./pages/AdminDashboard";
+import FacultyDashboard from "./pages/FacultyDashboard";
+// ── Student pages ──────────────────────────────────────────────
+import StudentDashboard from "./pages/StudentDashboard"; // ← NEW
+import StudentMyProfile from "./pages/StudentMyProfile"; // ← NEW
+import StudentClassroom from "./pages/StudentClassroom"; // ← NEW
+import StudentEvents from "./pages/StudentEvents"; // ← NEW
 import "./App.css";
 
-// ─── Route Guards ──────────────────────────────────────────
+// ─── Idle watcher ─────────────────────────────────────────────
+function IdleRedirect() {
+  const { idleLoggedOut } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (idleLoggedOut) navigate("/login", { replace: true });
+  }, [idleLoggedOut, navigate]);
+  return null;
+}
+
+// ─── Route Guards ──────────────────────────────────────────────
 function AdminRoute({ children }) {
   const { currentUser } = useAuth();
   if (!currentUser) return <Navigate to="/login" replace />;
@@ -17,13 +51,21 @@ function AdminRoute({ children }) {
   return children;
 }
 
-function AuthRoute({ children }) {
+function FacultyRoute({ children }) {
   const { currentUser } = useAuth();
   if (!currentUser) return <Navigate to="/login" replace />;
+  if (currentUser.role !== "Faculty") return <Navigate to="/login" replace />;
   return children;
 }
 
-// ─── Placeholder pages ─────────────────────────────────────
+function StudentRoute({ children }) {
+  const { currentUser } = useAuth();
+  if (!currentUser) return <Navigate to="/login" replace />;
+  if (currentUser.role !== "Student") return <Navigate to="/login" replace />;
+  return children;
+}
+
+// ─── Placeholder ───────────────────────────────────────────────
 function Placeholder({ icon, title, description }) {
   return (
     <div className="placeholder-page">
@@ -47,107 +89,82 @@ function NotFound() {
   );
 }
 
-// ─── App ───────────────────────────────────────────────────
+// ─── App Routes ────────────────────────────────────────────────
 function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+    <>
+      <IdleRedirect />
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/seed" element={<SeedPage />} />
 
-      <Route path="/login" element={<Login />} />
-      <Route path="/seed" element={<SeedPage />} />
+        {/* ── ADMIN PORTAL ── */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminLayout />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<Navigate to="overview" replace />} />
+          <Route path="overview" element={<AdminDashboard />} />
+          <Route path="students" element={<StudentProfiles />} />
+          <Route path="faculty" element={<FacultyProfiles />} />
+          <Route path="curriculum" element={<Curriculum />} />
+          <Route path="schedule" element={<Scheduling />} />
+          <Route path="syllabus" element={<AdminSyllabus />} />
+          <Route
+            path="lessons"
+            element={
+              <Placeholder
+                icon="📝"
+                title="Lessons"
+                description="Faculty upload and manage lesson materials."
+              />
+            }
+          />
+          <Route path="events" element={<Events />} />
+          <Route path="research" element={<Research />} />
+        </Route>
 
-      <Route
-        path="/admin"
-        element={
-          <AdminRoute>
-            <AdminLayout />
-          </AdminRoute>
-        }
-      >
-        <Route index element={<Navigate to="overview" replace />} />
+        {/* ── FACULTY PORTAL ── */}
         <Route
-          path="overview"
+          path="/faculty"
           element={
-            <Placeholder
-              icon="🏠"
-              title="Dashboard"
-              description="Welcome to the CCS Admin Portal."
-            />
+            <FacultyRoute>
+              <FacultyLayout />
+            </FacultyRoute>
           }
-        />
-        <Route path="students" element={<StudentProfiles />} />
-        <Route path="faculty" element={<FacultyProfiles />} />
-        <Route path="events" element={<Events />} /> {/* 👈 swapped */}
-        <Route
-          path="scheduling"
-          element={
-            <Placeholder
-              icon="🗓️"
-              title="Scheduling"
-              description="Manage class schedules."
-            />
-          }
-        />
-        <Route path="research" element={<Research />} />
-        <Route
-          path="syllabus"
-          element={
-            <Placeholder
-              icon="📋"
-              title="Syllabus"
-              description="Manage course syllabi."
-            />
-          }
-        />
-        <Route
-          path="curriculum"
-          element={
-            <Placeholder
-              icon="📚"
-              title="Curriculum"
-              description="Manage program curricula."
-            />
-          }
-        />
-        <Route
-          path="lessons"
-          element={
-            <Placeholder
-              icon="📝"
-              title="Lessons"
-              description="Manage lesson materials."
-            />
-          }
-        />
-      </Route>
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<FacultyDashboard />} />
+          <Route path="profile" element={<FacultyMyProfile />} />
+          <Route path="classrooms" element={<FacultyClassroomCalendar />} />
+          <Route path="syllabus" element={<FacultySyllabus />} />
+          <Route path="events" element={<FacultyEvents />} />
+        </Route>
 
-      <Route
-        path="/faculty"
-        element={
-          <AuthRoute>
-            <Placeholder
-              icon="🎓"
-              title="Faculty Dashboard"
-              description="Your classes and materials."
-            />
-          </AuthRoute>
-        }
-      />
-      <Route
-        path="/student"
-        element={
-          <AuthRoute>
-            <Placeholder
-              icon="📚"
-              title="Student Dashboard"
-              description="Your subjects and grades."
-            />
-          </AuthRoute>
-        }
-      />
+        {/* ── STUDENT PORTAL ── */}
+        <Route
+          path="/student"
+          element={
+            <StudentRoute>
+              <StudentLayout />
+            </StudentRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<StudentDashboard />} />
+          <Route path="profile" element={<StudentMyProfile />} />
+          <Route path="classroom" element={<StudentClassroom />} />
+          <Route path="events" element={<StudentEvents />} />
+        </Route>
 
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 }
 

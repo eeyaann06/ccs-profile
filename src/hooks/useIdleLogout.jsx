@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
+import { useAuth } from "../context/AuthContext";
 import "../styles/login.css";
 
 const PARTICLE_COUNT = 18;
@@ -86,6 +87,7 @@ const ROLE_ROUTES = {
 
 export default function Login() {
   const navigate = useNavigate();
+  const { idleLoggedOut } = useAuth(); // ✅ get idle state
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -183,6 +185,22 @@ export default function Login() {
               Use your assigned username and password
             </p>
           </header>
+
+          {/* ✅ Idle logout notice */}
+          {idleLoggedOut && (
+            <div
+              className="login-error"
+              role="alert"
+              style={{
+                background: "rgba(234,179,8,0.15)",
+                borderColor: "#ca8a04",
+                color: "#854d0e",
+              }}
+            >
+              <span className="login-error-icon">🕐</span> You were signed out
+              due to inactivity.
+            </div>
+          )}
 
           {error && (
             <div className="login-error" role="alert">

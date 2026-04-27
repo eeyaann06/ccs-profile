@@ -11,8 +11,11 @@ import {
   where,
   setDoc,
 } from "firebase/firestore";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { db, secondaryAuth } from "../config/firebase"; 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { db, secondaryAuth } from "../config/firebase";
 import "../styles/StudentProfiles.css";
 
 // ── Firestore collection ─────────────────────────────────────
@@ -247,6 +250,7 @@ function formToDoc(form, existing = {}) {
     year: parseInt(form.year),
     email: form.email.trim(),
     status: form.status,
+    section: form.section ?? "",
     personalInfo: {
       birthday: form.birthday,
       address: form.address.trim(),
@@ -274,12 +278,13 @@ const BLANK = {
   guardian: "",
   skillsRaw: "",
   affiliationsRaw: "",
+  section: "",
 };
 
-// ── Create Account Modal ─────────────────────────────────────
 function CreateAccountModal({ student, onClose, onSuccess }) {
-  const defaultUsername = student.studentId.toLowerCase().replace(/-/g, "");
-  const defaultEmail = student.email || `${defaultUsername}@ccs.edu`;
+  const defaultUsername = student.studentId.replace(/-/g, "");
+  const defaultEmail =
+    student.email || `${defaultUsername.toLowerCase()}@ccs.edu`;
   const defaultUserId = "USR-" + student.studentId;
   const birthdayRaw = student.personalInfo?.birthday ?? "";
   const defaultPassword = birthdayRaw
@@ -287,7 +292,6 @@ function CreateAccountModal({ student, onClose, onSuccess }) {
     : student.studentId.replace(/\D/g, "");
 
   const [username, setUsername] = useState(defaultUsername);
-  const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState(defaultPassword);
   const [showPw, setShowPw] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -297,39 +301,60 @@ function CreateAccountModal({ student, onClose, onSuccess }) {
   const addLog = (msg, type = "info") =>
     setLogs((prev) => [...prev, { msg, type }]);
 
+  // Email is always derived from username, never editable
+  const derivedEmail = `${username.trim().toLowerCase()}@ccs.edu`;
+
   async function handleCreate() {
-    if (!username.trim() || !email.trim() || !password.trim()) return;
+    if (!username.trim() || !password.trim()) return;
     setCreating(true);
     setLogs([]);
     setDone(false);
+
+    let firebaseUid = null;
+
     try {
       const { user: firebaseUser } = await createUserWithEmailAndPassword(
         secondaryAuth,
-        email.trim(),
+        derivedEmail,
         password
       );
-      addLog(`✓ Auth created: ${email.trim()}`, "success");
+      firebaseUid = firebaseUser.uid;
+      addLog(`✓ Auth account created`, "success");
+    } catch (err) {
+      if (err.code === "auth/email-already-in-use") {
+        addLog(
+          `✗ An account already exists for this username. Go to Firebase Console → Authentication → delete the existing account first, then try again.`,
+          "error"
+        );
+        setCreating(false);
+        return;
+      } else {
+        addLog(`✗ ${err.message}`, "error");
+        setCreating(false);
+        return;
+      }
+    }
+
+    try {
       await setDoc(doc(db, "users", defaultUserId), {
         user_id: defaultUserId,
-        uid: firebaseUser.uid,
+        uid: firebaseUid,
         name: student.name,
-        username: username.trim(),
-        email: email.trim(),
+        username: username.trim(), // ← stored as-is
+        usernameLower: username.trim().toLowerCase(), // ← for login query
+        email: derivedEmail,
+        password: password,
         role: "Student",
         studentId: student.studentId,
         course: student.course,
         year: student.year,
+        section: student.section ?? "",
       });
-      addLog(`✓ Firestore doc saved: users/${defaultUserId}`, "success");
+      addLog(`✓ Account saved successfully`, "success");
       setDone(true);
       if (onSuccess) onSuccess();
     } catch (err) {
-      if (err.code === "auth/email-already-in-use") {
-        addLog(`⚠ Account already exists for: ${email.trim()}`, "warn");
-        setDone(true);
-      } else {
-        addLog(`✗ Error: ${err.message}`, "error");
-      }
+      addLog(`✗ Firestore error: ${err.message}`, "error");
     } finally {
       setCreating(false);
     }
@@ -348,22 +373,13 @@ function CreateAccountModal({ student, onClose, onSuccess }) {
             </div>
             <div className="sp-modal-identity">
               <h2 className="sp-modal-name">Create Account</h2>
-              <p className="sp-modal-id">{student.studentId}</p>
+              <p className="sp-modal-id">{student.name}</p>
               <div className="sp-modal-meta">
                 <span className="sp-badge sp-badge--course">
                   {student.course}
                 </span>
                 <span className="sp-badge sp-badge--year">
                   Year {student.year}
-                </span>
-                <span
-                  className={`sp-badge ${
-                    student.status === "Active"
-                      ? "sp-badge--active"
-                      : "sp-badge--irregular"
-                  }`}
-                >
-                  {student.status}
                 </span>
               </div>
             </div>
@@ -374,9 +390,11 @@ function CreateAccountModal({ student, onClose, onSuccess }) {
 
           <div className="sp-modal-body">
             <div className="sp-account-fields">
+              {/* Read-only info */}
               {[
-                { label: "User ID (auto)", value: defaultUserId },
-                { label: "Role (auto)", value: "Student" },
+                { label: "User ID", value: defaultUserId },
+                { label: "Role", value: "Student" },
+                { label: "Email (auto)", value: derivedEmail },
               ].map(({ label, value }) => (
                 <div key={label} className="sp-form-group">
                   <label>{label}</label>
@@ -388,34 +406,27 @@ function CreateAccountModal({ student, onClose, onSuccess }) {
                 </div>
               ))}
 
+              {/* Username */}
               <div className="sp-form-group">
                 <label>Username</label>
                 <input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={creating || done}
-                  placeholder="username"
+                  placeholder="Enter username"
                 />
               </div>
 
-              <div className="sp-form-group">
-                <label>Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={creating || done}
-                  placeholder="email@example.com"
-                />
-              </div>
-
+              {/* Password */}
               <div className="sp-form-group">
                 <label>
                   Password
-                  <span className="sp-form-hint">
-                    {" "}
-                    (from birthday: {birthdayRaw || "not set"})
-                  </span>
+                  {birthdayRaw && (
+                    <span className="sp-form-hint">
+                      {" "}
+                      (from birthday: {birthdayRaw})
+                    </span>
+                  )}
                 </label>
                 <div className="sp-account-pw-wrap">
                   <input
@@ -423,7 +434,7 @@ function CreateAccountModal({ student, onClose, onSuccess }) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={creating || done}
-                    placeholder="password"
+                    placeholder="Enter password"
                   />
                   <button
                     type="button"
@@ -435,6 +446,22 @@ function CreateAccountModal({ student, onClose, onSuccess }) {
                 </div>
               </div>
 
+              {/* Credentials summary shown after done */}
+              {done && (
+                <div className="sp-account-summary">
+                  <p>✅ Account created. Share these credentials:</p>
+                  <div className="sp-credential-row">
+                    <span>Username</span>
+                    <strong>{username.trim()}</strong>
+                  </div>
+                  <div className="sp-credential-row">
+                    <span>Password</span>
+                    <strong>{password}</strong>
+                  </div>
+                </div>
+              )}
+
+              {/* Logs */}
               {logs.length > 0 && (
                 <div className="sp-account-log">
                   {logs.map((l, i) => (
@@ -457,7 +484,7 @@ function CreateAccountModal({ student, onClose, onSuccess }) {
             <button className="sp-btn sp-btn--ghost" onClick={onClose}>
               {done ? "Close" : "Cancel"}
             </button>
-            {!done ? (
+            {!done && (
               <button
                 className="sp-btn sp-btn--primary"
                 onClick={handleCreate}
@@ -473,8 +500,6 @@ function CreateAccountModal({ student, onClose, onSuccess }) {
                   </>
                 )}
               </button>
-            ) : (
-              <span className="sp-account-done">✅ Account Ready</span>
             )}
           </div>
         </div>
@@ -483,7 +508,6 @@ function CreateAccountModal({ student, onClose, onSuccess }) {
   );
 }
 
-// ── Student Form Modal (Add & Edit) ──────────────────────────
 function StudentFormModal({ initial, onSave, onClose, saving }) {
   const isEdit = Boolean(initial);
   const [form, setForm] = useState(() =>
@@ -495,6 +519,7 @@ function StudentFormModal({ initial, onSave, onClose, saving }) {
           year: String(initial.year),
           email: initial.email,
           status: initial.status,
+          section: initial.section ?? "",
           birthday: initial.personalInfo?.birthday ?? "",
           address: initial.personalInfo?.address ?? "",
           contact: initial.personalInfo?.contact ?? "",
@@ -506,6 +531,31 @@ function StudentFormModal({ initial, onSave, onClose, saving }) {
   );
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  // ── Load sections from Firestore filtered by course + year ──
+  const [sections, setSections] = useState([]);
+  const [loadingSections, setLoadingSections] = useState(false);
+
+  useEffect(() => {
+    async function loadSections() {
+      setLoadingSections(true);
+      setSections([]); // clear when course/year changes
+      set("section", ""); // reset selection
+      try {
+        const snap = await getDocs(
+          query(
+            collection(db, "sections"),
+            where("course", "==", form.course),
+            where("yearLevel", "==", parseInt(form.year))
+          )
+        );
+        setSections(snap.docs.map((d) => ({ _docId: d.id, ...d.data() })));
+      } finally {
+        setLoadingSections(false);
+      }
+    }
+    loadSections();
+  }, [form.course, form.year]); // re-fetch whenever course or year changes
 
   return (
     <Modal>
@@ -588,6 +638,36 @@ function StudentFormModal({ initial, onSave, onClose, saving }) {
                       ))}
                     </select>
                   </div>
+
+                  {/* ── SECTION DROPDOWN (replaces free-text input) ── */}
+                  <div className="sp-form-group">
+                    <label>
+                      Section
+                      {loadingSections && (
+                        <span className="sp-form-hint"> loading…</span>
+                      )}
+                    </label>
+                    <select
+                      value={form.section}
+                      onChange={(e) => set("section", e.target.value)}
+                      disabled={loadingSections}
+                    >
+                      <option value="">— No Section —</option>
+                      {sections.map((sec) => (
+                        <option key={sec._docId} value={sec.sectionName}>
+                          {sec.sectionName}
+                        </option>
+                      ))}
+                    </select>
+                    {!loadingSections && sections.length === 0 && (
+                      <span className="sp-form-hint">
+                        No sections for {form.course} Year {form.year}. Create
+                        them in Curriculum → Sections.
+                      </span>
+                    )}
+                  </div>
+                  {/* ── END SECTION DROPDOWN ── */}
+
                   <div className="sp-form-group">
                     <label>Email *</label>
                     <input
@@ -712,7 +792,6 @@ function StudentFormModal({ initial, onSave, onClose, saving }) {
     </Modal>
   );
 }
-
 // ── Delete Confirm Modal ─────────────────────────────────────
 function DeleteConfirmModal({ student, onConfirm, onClose, deleting }) {
   return (
@@ -756,7 +835,7 @@ function DeleteConfirmModal({ student, onConfirm, onClose, deleting }) {
 }
 
 // ── Student Detail Modal (View) ──────────────────────────────
-function StudentModal({ student, onClose, onEdit }) {
+function StudentModal({ student, onClose }) {
   const [tab, setTab] = useState("personal");
   if (!student) return null;
 
@@ -828,6 +907,7 @@ function StudentModal({ student, onClose, onEdit }) {
                 <div className="sp-info-grid">
                   {[
                     ["Email", student.email],
+                    ["Section", student.section || "—"],
                     ["Birthday", student.personalInfo?.birthday || "—"],
                     ["Contact", student.personalInfo?.contact || "—"],
                     ["Guardian", student.personalInfo?.guardian || "—"],
@@ -1370,7 +1450,7 @@ export default function StudentProfiles() {
               <tr>
                 <th>Student</th>
                 <th>ID Number</th>
-                <th>Course</th>
+                <th>Course / Section</th>
                 <th>Year</th>
                 <th>Skills</th>
                 <th>Status</th>
@@ -1390,7 +1470,17 @@ export default function StudentProfiles() {
                     </div>
                   </td>
                   <td className="sp-row-id">{s.studentId}</td>
-                  <td>{s.course}</td>
+                  <td>
+                    <div>
+                      <div>{s.course}</div>
+                      {s.section && (
+                        <div style={{ fontSize: ".75rem", color: "#6b7280" }}>
+                          {s.section}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+
                   <td>Year {s.year}</td>
                   <td>
                     <div className="sp-tags sp-tags--compact">

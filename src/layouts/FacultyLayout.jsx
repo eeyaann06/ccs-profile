@@ -1,47 +1,50 @@
+// src/layouts/FacultyLayout.jsx
 import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { auth } from "../config/firebase"; // ✅ add this import
+import { auth } from "../config/firebase";
+
+import "../styles/AdminLayout.css";
 import "../styles/Sidebar.css";
+import "../styles/Header.css";
 
 const NAV = [
   {
     section: "Overview",
-    items: [{ label: "Dashboard", icon: "🏠", path: "/admin/overview" }],
+    items: [{ label: "Dashboard", icon: "🏠", path: "/faculty/dashboard" }],
   },
   {
-    section: "Profiles",
-    items: [
-      { label: "Student Profiles", icon: "🎓", path: "/admin/students" },
-      { label: "Faculty Profiles", icon: "👩‍🏫", path: "/admin/faculty" },
-    ],
+    section: "Personal",
+    items: [{ label: "My Profile", icon: "👩‍🏫", path: "/faculty/profile" }],
   },
   {
-    section: "Academic",
+    section: "Academics",
     items: [
-      { label: "Curriculum", icon: "📚", path: "/admin/curriculum" },
-      { label: "Scheduling", icon: "🗓️", path: "/admin/schedule" },
-      { label: "Events", icon: "📅", path: "/admin/events" },
-      { label: "College Research", icon: "🔬", path: "/admin/research" },
+      { label: "Classrooms", icon: "🏫", path: "/faculty/classrooms" },
+      { label: "Syllabus", icon: "📋", path: "/faculty/syllabus" },
     ],
   },
+  // ── NEW ──
   {
-    section: "Instructions",
-    items: [
-      { label: "Syllabus", icon: "📋", path: "/admin/syllabus" },
-      { label: "Lessons", icon: "📝", path: "/admin/lessons" },
-    ],
+    section: "Campus",
+    items: [{ label: "Events", icon: "📅", path: "/faculty/events" }],
   },
 ];
 
-export default function Sidebar({ collapsed, onToggle }) {
+const PAGE_TITLES = {
+  "/faculty/dashboard": { title: "Dashboard", icon: "🏠" },
+  "/faculty/profile": { title: "My Profile", icon: "👩‍🏫" },
+  "/faculty/classrooms": { title: "Classrooms", icon: "🏫" },
+  "/faculty/syllabus": { title: "Syllabus", icon: "📋" },
+  "/faculty/events": { title: "Events", icon: "📅" }, // ← NEW
+};
+
+function FacultySidebar({ collapsed, onToggle }) {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
 
   async function handleLogout() {
     await logout();
-
-    // ✅ Wait for Firebase auth state to fully clear before navigating
     await new Promise((resolve) => {
       const unsubscribe = auth.onAuthStateChanged((user) => {
         if (!user) {
@@ -50,19 +53,17 @@ export default function Sidebar({ collapsed, onToggle }) {
         }
       });
     });
-
     navigate("/login");
   }
 
   return (
     <aside className={`sidebar ${collapsed ? "sidebar--collapsed" : ""}`}>
-      {/* Logo */}
       <div className="sidebar-logo">
         <div className="sidebar-logo-badge">CCS</div>
         {!collapsed && (
           <div className="sidebar-logo-text">
             <span className="sidebar-logo-title">CCS Portal</span>
-            <span className="sidebar-logo-sub">Admin Console</span>
+            <span className="sidebar-logo-sub">Faculty Console</span>
           </div>
         )}
         <button
@@ -88,15 +89,16 @@ export default function Sidebar({ collapsed, onToggle }) {
         </button>
       </div>
 
-      {/* User pill */}
       {!collapsed && currentUser && (
         <div className="sidebar-user">
           <div className="sidebar-user-avatar">
-            {currentUser.name?.charAt(0) ?? "A"}
+            {currentUser.name?.charAt(0) ?? "F"}
           </div>
           <div className="sidebar-user-info">
             <span className="sidebar-user-name">{currentUser.name}</span>
-            <span className="sidebar-user-role">{currentUser.role}</span>
+            <span className="sidebar-user-role">
+              {currentUser.role || "Faculty"}
+            </span>
           </div>
         </div>
       )}
@@ -106,12 +108,11 @@ export default function Sidebar({ collapsed, onToggle }) {
           title={currentUser.name}
         >
           <div className="sidebar-user-avatar">
-            {currentUser.name?.charAt(0) ?? "A"}
+            {currentUser.name?.charAt(0) ?? "F"}
           </div>
         </div>
       )}
 
-      {/* Nav */}
       <nav className="sidebar-nav">
         {NAV.map(({ section, items }) => (
           <div key={section} className="sidebar-section">
@@ -140,7 +141,6 @@ export default function Sidebar({ collapsed, onToggle }) {
         ))}
       </nav>
 
-      {/* Logout */}
       <div className="sidebar-footer">
         <button
           className="sidebar-logout"
@@ -165,5 +165,60 @@ export default function Sidebar({ collapsed, onToggle }) {
         </button>
       </div>
     </aside>
+  );
+}
+
+function FacultyHeader({ sidebarCollapsed }) {
+  const { currentUser } = useAuth();
+  const location = useLocation();
+
+  const page = PAGE_TITLES[location.pathname] ?? {
+    title: "Faculty Portal",
+    icon: "📚",
+  };
+
+  const dateStr = new Date().toLocaleDateString("en-PH", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  return (
+    <header className="header" style={{ left: sidebarCollapsed ? 68 : 260 }}>
+      <div className="header-left">
+        <span className="header-page-icon">{page.icon}</span>
+        <div className="header-page-info">
+          <h2 className="header-page-title">{page.title}</h2>
+          <p className="header-date">{dateStr}</p>
+        </div>
+      </div>
+      <div className="header-right">
+        {currentUser && (
+          <div className="header-avatar" title={currentUser.name}>
+            {currentUser.name?.charAt(0) ?? "F"}
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}
+
+export default function FacultyLayout() {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <div className="admin-layout">
+      <FacultySidebar
+        collapsed={collapsed}
+        onToggle={() => setCollapsed((v) => !v)}
+      />
+      <div className="admin-main" style={{ marginLeft: collapsed ? 68 : 260 }}>
+        <FacultyHeader sidebarCollapsed={collapsed} />
+        <main className="admin-content">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 }

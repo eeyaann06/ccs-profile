@@ -743,59 +743,57 @@ function DeleteModal({ faculty, onConfirm, onClose, deleting }) {
 
 // ── Create Account Modal ───────────────────────────────────
 function CreateAccountModal({ faculty, onClose, onSuccess }) {
-  const defaultUsername =
-    faculty.username || faculty.name?.toLowerCase().replace(/\s+/g, "") || "";
-  const defaultEmail = faculty.email || `${defaultUsername}@ccs.edu`;
-  const defaultPassword =
-    faculty.contact?.replace(/\D/g, "") || faculty.user_id.replace(/\D/g, "");
+  const defaultUsername = faculty.username || "";
+  const defaultPassword = faculty.contact?.replace(/\D/g, "") || faculty.user_id.replace(/\D/g, "");
 
   const [username, setUsername] = useState(defaultUsername);
-  const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState(defaultPassword);
-  const [showPw, setShowPw] = useState(false);
+  const [showPw, setShowPw]     = useState(false);
   const [creating, setCreating] = useState(false);
-  const [logs, setLogs] = useState([]);
-  const [done, setDone] = useState(false);
+  const [logs, setLogs]         = useState([]);
+  const [done, setDone]         = useState(false);
 
   const addLog = (msg, type = "info") =>
     setLogs((prev) => [...prev, { msg, type }]);
 
+  const derivedEmail = `${username.trim().toLowerCase()}@ccs.edu`;
+
   async function handleCreate() {
-    if (!username.trim() || !email.trim() || !password.trim()) return;
+    if (!username.trim() || !password.trim()) return;
     setCreating(true);
     setLogs([]);
     setDone(false);
+
     try {
       const { user: fbUser } = await createUserWithEmailAndPassword(
-        secondaryAuth,
-        email.trim(),
-        password
+        secondaryAuth, derivedEmail, password
       );
-      addLog(`✓ Auth created: ${email.trim()}`, "success");
+      addLog(`✓ Auth account created`, "success");
 
       await setDoc(doc(db, "users", faculty.user_id), {
-        user_id: faculty.user_id,
-        uid: fbUser.uid,
-        name: faculty.name,
-        username: username.trim(),
-        email: email.trim(),
-        role: "Faculty",
-        gender: faculty.gender || "",
-        department: faculty.department || "",
+        user_id:        faculty.user_id,
+        uid:            fbUser.uid,
+        name:           faculty.name,
+        username:       username.trim(),               // ← as-is
+        usernameLower:  username.trim().toLowerCase(), // ← for login
+        email:          derivedEmail,
+        password:       password,
+        role:           "Faculty",
+        gender:         faculty.gender || "",
+        department:     faculty.department || "",
         specialization: faculty.specialization || "",
-        contact: faculty.contact || "",
-        status: faculty.status || "Active",
-        subjects: faculty.subjects ?? [],
+        contact:        faculty.contact || "",
+        status:         faculty.status || "Active",
+        subjects:       faculty.subjects ?? [],
       });
-      addLog(`✓ Firestore doc saved: users/${faculty.user_id}`, "success");
+      addLog(`✓ Account saved successfully`, "success");
       setDone(true);
       if (onSuccess) onSuccess();
     } catch (err) {
       if (err.code === "auth/email-already-in-use") {
-        addLog(`⚠ Account already exists: ${email.trim()}`, "warn");
-        setDone(true);
+        addLog(`✗ Username already taken. Delete the existing account in Firebase Console → Authentication first.`, "error");
       } else {
-        addLog(`✗ Error: ${err.message}`, "error");
+        addLog(`✗ ${err.message}`, "error");
       }
     } finally {
       setCreating(false);
@@ -810,32 +808,25 @@ function CreateAccountModal({ faculty, onClose, onSuccess }) {
         </div>
         <div className="fp-modal-identity">
           <h2 className="fp-modal-name">Create Account</h2>
-          <p className="fp-modal-sub">{faculty.user_id}</p>
+          <p className="fp-modal-sub">{faculty.name}</p>
           <div className="fp-modal-chips">
-            <span className="fp-chip fp-chip--dept">
-              {faculty.department || "No dept."}
-            </span>
-            <span
-              className={`fp-chip ${
-                faculty.status === "Active"
-                  ? "fp-chip--active"
-                  : "fp-chip--inactive"
-              }`}
-            >
+            <span className="fp-chip fp-chip--dept">{faculty.department || "No dept."}</span>
+            <span className={`fp-chip ${faculty.status === "Active" ? "fp-chip--active" : "fp-chip--inactive"}`}>
               {faculty.status || "Active"}
             </span>
           </div>
         </div>
-        <button className="fp-modal-close" onClick={onClose}>
-          <CloseIcon />
-        </button>
+        <button className="fp-modal-close" onClick={onClose}><CloseIcon /></button>
       </div>
 
       <div className="fp-modal-body">
         <div className="fp-account-fields">
+
+          {/* Read-only info */}
           {[
-            { label: "User ID (auto)", value: faculty.user_id },
-            { label: "Role (auto)", value: "Faculty" },
+            { label: "User ID",      value: faculty.user_id },
+            { label: "Role",         value: "Faculty" },
+            { label: "Email (auto)", value: derivedEmail },
           ].map(({ label, value }) => (
             <div key={label} className="fp-form-group">
               <label>{label}</label>
@@ -843,58 +834,54 @@ function CreateAccountModal({ faculty, onClose, onSuccess }) {
             </div>
           ))}
 
+          {/* Username */}
           <div className="fp-form-group">
             <label>Username</label>
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={creating || done}
-              placeholder="username"
+              placeholder="Enter username"
             />
           </div>
 
+          {/* Password */}
           <div className="fp-form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={creating || done}
-              placeholder="email@example.com"
-            />
-          </div>
-
-          <div className="fp-form-group">
-            <label>
-              Password{" "}
-              <span className="fp-form-hint">
-                (auto-generated from contact or ID)
-              </span>
-            </label>
+            <label>Password</label>
             <div className="fp-pw-wrap">
               <input
                 type={showPw ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={creating || done}
-                placeholder="password"
+                placeholder="Enter password"
               />
-              <button
-                type="button"
-                className="fp-eye-btn"
-                onClick={() => setShowPw((v) => !v)}
-              >
+              <button type="button" className="fp-eye-btn" onClick={() => setShowPw((v) => !v)}>
                 <EyeIcon off={showPw} />
               </button>
             </div>
           </div>
 
+          {/* Credentials summary after done */}
+          {done && (
+            <div className="fp-account-summary">
+              <p>✅ Account created. Share these credentials:</p>
+              <div className="fp-credential-row">
+                <span>Username</span>
+                <strong>{username.trim()}</strong>
+              </div>
+              <div className="fp-credential-row">
+                <span>Password</span>
+                <strong>{password}</strong>
+              </div>
+            </div>
+          )}
+
+          {/* Logs */}
           {logs.length > 0 && (
             <div className="fp-account-log">
               {logs.map((l, i) => (
-                <div key={i} className={`fp-log-line fp-log-line--${l.type}`}>
-                  {l.msg}
-                </div>
+                <div key={i} className={`fp-log-line fp-log-line--${l.type}`}>{l.msg}</div>
               ))}
             </div>
           )}
@@ -905,24 +892,10 @@ function CreateAccountModal({ faculty, onClose, onSuccess }) {
         <button className="fp-btn fp-btn--ghost" onClick={onClose}>
           {done ? "Close" : "Cancel"}
         </button>
-        {!done ? (
-          <button
-            className="fp-btn fp-btn--primary"
-            onClick={handleCreate}
-            disabled={creating}
-          >
-            {creating ? (
-              <>
-                <SpinnerIcon /> Creating…
-              </>
-            ) : (
-              <>
-                <KeyIcon /> Create Account
-              </>
-            )}
+        {!done && (
+          <button className="fp-btn fp-btn--primary" onClick={handleCreate} disabled={creating}>
+            {creating ? <><SpinnerIcon /> Creating…</> : <><KeyIcon /> Create Account</>}
           </button>
-        ) : (
-          <span className="fp-account-done">✅ Account Ready</span>
         )}
       </div>
     </ModalBase>

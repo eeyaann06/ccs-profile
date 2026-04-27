@@ -1,0 +1,842 @@
+/* src/styles/FacultyPages.css
+   ──────────────────────────────────────────────────────────
+   Shared styles for Faculty-portal content pages:
+     • FacultyMyProfile  (fmp-*)
+     • FacultyMySchedule (fms-*)
+   ──────────────────────────────────────────────────────────
+*/
+
+/* ── Keyframes ─────────────────────────────────────────── */
+@keyframes fmp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes fmp-fadein {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SHARED UTILITIES
+═══════════════════════════════════════════════════════ */
+.fmp-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 200px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* Buttons */
+.fmp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+}
+.fmp-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.fmp-btn--primary {
+  background: #2563eb;
+  color: #fff;
+}
+.fmp-btn--primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+.fmp-btn--ghost {
+  background: transparent;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+.fmp-btn--ghost:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+.fmp-btn--sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Alert banners */
+.fmp-alert {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  animation: fmp-fadein 0.2s ease;
+}
+.fmp-alert--success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+.fmp-alert--error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+/* Chips */
+.fmp-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.fmp-chip--role {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.fmp-chip--dept {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.fmp-chip--spec {
+  background: #fef9c3;
+  color: #854d0e;
+  border: 1px solid #fde68a;
+}
+.fmp-chip--active {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+.fmp-chip--inactive {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+.fmp-chip--leave {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+/* ═══════════════════════════════════════════════════════
+   FACULTY MY PROFILE  (fmp-*)
+═══════════════════════════════════════════════════════ */
+
+.fmp-page {
+  animation: fmp-fadein 0.25s ease;
+  max-width: 900px;
+}
+
+/* ── Hero card ─────────────────────────────────────────── */
+.fmp-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.fmp-hero-avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.fmp-hero-info {
+  flex: 1;
+  min-width: 0;
+}
+.fmp-hero-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 2px;
+}
+.fmp-hero-id {
+  font-size: 12px;
+  color: #9ca3af;
+  font-family: monospace;
+  margin: 0 0 10px;
+}
+.fmp-hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fmp-hero-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.fmp-name-input {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  border: 1.5px solid #93c5fd;
+  border-radius: 6px;
+  padding: 4px 10px;
+  width: 100%;
+  background: #eff6ff;
+  outline: none;
+  margin-bottom: 8px;
+}
+.fmp-name-input:focus {
+  border-color: #3b82f6;
+}
+
+/* ── Tabs ──────────────────────────────────────────────── */
+.fmp-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 20px;
+}
+.fmp-tab {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.fmp-tab:hover {
+  color: #374151;
+}
+.fmp-tab--active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  font-weight: 600;
+}
+
+/* ── Body layout ───────────────────────────────────────── */
+.fmp-body {
+  animation: fmp-fadein 0.2s ease;
+}
+
+.fmp-section-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px) {
+  .fmp-section-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Info card ─────────────────────────────────────────── */
+.fmp-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.fmp-card--full {
+  grid-column: 1 / -1;
+}
+
+.fmp-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+/* ── Info row ──────────────────────────────────────────── */
+.fmp-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f9fafb;
+  gap: 12px;
+}
+.fmp-info-row:last-child {
+  border-bottom: none;
+}
+.fmp-info-label {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.fmp-info-value {
+  font-size: 13px;
+  color: #111827;
+  font-weight: 500;
+  text-align: right;
+}
+
+/* ── Subject grid ──────────────────────────────────────── */
+.fmp-subject-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.fmp-subject-badge {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── Empty state ───────────────────────────────────────── */
+.fmp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 8px;
+  color: #9ca3af;
+}
+.fmp-empty span {
+  font-size: 36px;
+}
+.fmp-empty p {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ── Contact grid ──────────────────────────────────────── */
+.fmp-contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 520px) {
+  .fmp-contact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.fmp-contact-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fmp-contact-field label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.fmp-contact-value {
+  font-size: 14px;
+  color: #111827;
+  font-weight: 500;
+}
+.fmp-muted {
+  color: #6b7280;
+}
+
+.fmp-input {
+  border: 1.5px solid #d1d5db;
+  border-radius: 7px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #111827;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.fmp-input:focus {
+  border-color: #3b82f6;
+}
+
+.fmp-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
+}
+
+/* ═══════════════════════════════════════════════════════
+   FACULTY MY SCHEDULE  (fms-*)
+═══════════════════════════════════════════════════════ */
+
+.fms-page {
+  animation: fmp-fadein 0.25s ease;
+}
+
+/* ── Page header ───────────────────────────────────────── */
+.fms-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+.fms-page-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+}
+.fms-page-sub {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ── Stats row ─────────────────────────────────────────── */
+.fms-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+@media (max-width: 640px) {
+  .fms-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.fms-stat {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.fms-stat-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #2563eb;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.fms-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.fms-stat-sub {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+/* ── Controls bar ──────────────────────────────────────── */
+.fms-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.fms-sel-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fms-sel-group label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.fms-sel-group select {
+  padding: 7px 12px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #374151;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+  min-width: 160px;
+}
+.fms-sel-group select:focus {
+  border-color: #3b82f6;
+}
+
+.fms-clear-btn {
+  font-size: 12px;
+  color: #ef4444;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  font-weight: 500;
+  align-self: flex-end;
+}
+.fms-clear-btn:hover {
+  text-decoration: underline;
+}
+
+.fms-view-toggle {
+  display: flex;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+  align-self: flex-end;
+}
+.fms-view-btn {
+  padding: 7px 12px;
+  background: #fff;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+.fms-view-btn + .fms-view-btn {
+  border-left: 1.5px solid #d1d5db;
+}
+.fms-view-btn:hover {
+  background: #f3f4f6;
+}
+.fms-view-btn--active {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.fms-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: #9ca3af;
+  align-self: center;
+}
+
+/* ── Loading / empty ───────────────────────────────────── */
+.fms-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 60px 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+.fms-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 8px;
+  color: #9ca3af;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+.fms-empty span {
+  font-size: 42px;
+}
+.fms-empty p {
+  font-size: 14px;
+  margin: 0;
+  color: #374151;
+}
+.fms-empty-sub {
+  font-size: 12px !important;
+  color: #9ca3af !important;
+}
+
+/* ── List View ─────────────────────────────────────────── */
+.fms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.fms-day-group {
+}
+.fms-day-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+.fms-day-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2563eb;
+  flex-shrink: 0;
+}
+.fms-day-count {
+  background: #e5e7eb;
+  color: #6b7280;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+
+.fms-entry {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  transition: box-shadow 0.15s;
+}
+.fms-entry:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.fms-entry-strip {
+  width: 4px;
+  height: 44px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.fms-entry-time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+.fms-entry-time-start,
+.fms-entry-time-end {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+.fms-entry-time-sep {
+  font-size: 10px;
+  color: #d1d5db;
+}
+
+.fms-entry-subject {
+  flex: 1;
+  min-width: 0;
+}
+.fms-entry-code {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: monospace;
+  display: block;
+}
+.fms-entry-name {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.fms-entry-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.fms-entry-section,
+.fms-entry-room {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.fms-entry-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.fms-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.fms-type-badge--lecture {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.fms-type-badge--lab {
+  background: #fdf4ff;
+  color: #7e22ce;
+}
+.fms-type-badge--recitation {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.fms-units-badge {
+  font-size: 10px;
+  color: #9ca3af;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+/* ── Timetable View ────────────────────────────────────── */
+.fms-timetable-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 4px;
+}
+
+.fms-timetable {
+  display: flex;
+  min-width: 700px;
+}
+
+.fms-tt-time-col {
+  width: 56px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+.fms-tt-header-cell {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #f3f4f6;
+}
+.fms-tt-hour-label {
+  height: 48px;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+  justify-content: center;
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 500;
+  border-bottom: 1px dashed #f3f4f6;
+}
+
+.fms-tt-day-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #f3f4f6;
+}
+.fms-tt-body {
+  flex: 1;
+  position: relative;
+  height: 672px; /* 14 hours × 48px */
+}
+
+.fms-tt-hour-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed #f3f4f6;
+}
+
+.fms-tt-block {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  border-radius: 7px;
+  padding: 5px 7px;
+  overflow: hidden;
+  cursor: default;
+  transition: filter 0.15s;
+  min-height: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.fms-tt-block:hover {
+  filter: brightness(0.9);
+}
+
+.fms-tt-code {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fms-tt-section {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fms-tt-room {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fms-tt-time {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+}

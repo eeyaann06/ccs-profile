@@ -1,0 +1,1271 @@
+/* ============================================================
+   Lessons.css — orange dark theme
+   ============================================================ */
+
+.les-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  animation: fadeUp 0.35s ease both;
+}
+
+/* ── Keyframes ────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes les-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Error Banner ─────────────────────────────────────────── */
+.les-error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: rgba(69, 10, 10, 0.6);
+  border: 1px solid var(--clr-error-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  color: #fca5a5;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.les-error-banner button {
+  background: transparent;
+  border: none;
+  color: #fca5a5;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  opacity: 0.8;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.les-error-banner button:hover {
+  opacity: 1;
+}
+
+/* ── Toolbar ──────────────────────────────────────────────── */
+.les-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.les-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-full);
+  padding: 0.45rem 1rem;
+  color: var(--clr-text-sub);
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+  transition: border-color 0.18s;
+}
+.les-search-wrap:focus-within {
+  border-color: var(--clr-border-focus);
+}
+
+.les-search {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--clr-text);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  flex: 1;
+}
+.les-search::placeholder {
+  color: var(--clr-text-sub);
+}
+
+.les-search-clear {
+  background: transparent;
+  border: none;
+  color: var(--clr-text-sub);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.18s;
+}
+.les-search-clear:hover {
+  color: var(--clr-text);
+}
+
+.les-select {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  color: var(--clr-text);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 0.48rem 2rem 0.48rem 0.85rem;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23d97706' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  transition: border-color 0.18s;
+}
+.les-select:focus {
+  border-color: var(--clr-border-focus);
+}
+
+.les-toolbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.les-count {
+  font-size: 0.8rem;
+  color: var(--clr-text-muted);
+  white-space: nowrap;
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.les-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.55rem 1.2rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  line-height: 1;
+  transition: background 0.18s, border-color 0.18s, transform 0.15s,
+    box-shadow 0.18s, color 0.18s;
+}
+.les-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.les-btn--primary {
+  background: var(--clr-orange);
+  color: #fff;
+  border-color: var(--clr-orange);
+}
+.les-btn--primary:hover:not(:disabled) {
+  background: var(--clr-orange-dark);
+  border-color: var(--clr-orange-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-btn);
+}
+
+.les-btn--ghost {
+  background: var(--clr-surface-2);
+  color: var(--clr-text-muted);
+  border-color: var(--clr-border);
+}
+.les-btn--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--clr-text);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.les-btn--outline {
+  background: transparent;
+  color: var(--clr-orange);
+  border-color: rgba(249, 115, 22, 0.4);
+}
+.les-btn--outline:hover:not(:disabled) {
+  background: rgba(249, 115, 22, 0.08);
+  border-color: var(--clr-orange);
+}
+
+.les-btn--danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+.les-btn--danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.28);
+  border-color: rgba(239, 68, 68, 0.6);
+  transform: translateY(-1px);
+}
+
+.les-btn--danger-ghost {
+  background: transparent;
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.les-btn--danger-ghost:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.les-btn--sm {
+  font-size: 0.8rem;
+  padding: 0.38rem 0.85rem;
+}
+
+/* ── Loading / Empty ──────────────────────────────────────── */
+.les-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 4rem 2rem;
+  color: var(--clr-text-muted);
+  font-size: 0.88rem;
+  grid-column: 1 / -1;
+}
+
+.les-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 4rem 2rem;
+  color: var(--clr-text-sub);
+  grid-column: 1 / -1;
+  text-align: center;
+}
+.les-empty span {
+  font-size: 2.5rem;
+}
+.les-empty p {
+  font-size: 0.9rem;
+}
+
+/* ── Cards Grid ───────────────────────────────────────────── */
+.les-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.les-card {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  animation: fadeUp 0.3s ease both;
+  position: relative;
+  overflow: hidden;
+}
+.les-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--clr-orange), var(--clr-orange-dark));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.les-card:hover {
+  border-color: rgba(249, 115, 22, 0.35);
+  box-shadow: 0 4px 20px rgba(249, 115, 22, 0.08);
+  transform: translateY(-2px);
+}
+.les-card:hover::before {
+  opacity: 1;
+}
+
+.les-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.les-card-type-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--clr-orange);
+  background: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  border-radius: var(--radius-full);
+  padding: 0.22rem 0.65rem;
+}
+
+/* Status chips */
+.les-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.22rem 0.65rem;
+}
+.les-chip--pending {
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: #fcd34d;
+}
+.les-chip--approved {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #6ee7b7;
+}
+.les-chip--rejected {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+.les-chip--type {
+  background: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  color: var(--clr-orange);
+}
+
+.les-card-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--clr-text);
+  line-height: 1.35;
+  margin: 0;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.les-card-title:hover {
+  color: var(--clr-orange);
+}
+
+.les-card-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: var(--clr-text-sub);
+}
+.les-card-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.les-card-meta span:not(:last-child)::after {
+  content: "·";
+  margin-left: 0.5rem;
+  opacity: 0.4;
+}
+
+.les-card-desc {
+  font-size: 0.82rem;
+  color: var(--clr-text-muted);
+  line-height: 1.55;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.les-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: auto;
+}
+
+.les-quiz-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: var(--radius-full);
+  color: #a5b4fc;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.22rem 0.65rem;
+  width: fit-content;
+}
+
+.les-card-note {
+  font-size: 0.78rem;
+  color: #fca5a5;
+  background: rgba(69, 10, 10, 0.4);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.65rem;
+  line-height: 1.5;
+}
+
+/* Row of action icon-buttons at card bottom */
+.les-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--clr-border);
+  margin-top: 0.25rem;
+}
+
+.les-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--clr-border);
+  background: var(--clr-surface-2);
+  color: var(--clr-text-muted);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.les-action-btn:hover {
+  background: rgba(249, 115, 22, 0.1);
+  border-color: rgba(249, 115, 22, 0.4);
+  color: var(--clr-orange);
+}
+.les-action-btn--edit:hover {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.35);
+  color: #fcd34d;
+}
+.les-action-btn--chart:hover {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.35);
+  color: #a5b4fc;
+}
+.les-action-btn--delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+.les-action-btn--download:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #6ee7b7;
+}
+
+/* ── Modal Overlay ────────────────────────────────────────── */
+.les-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeIn 0.2s ease both;
+}
+
+.les-modal {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeUp 0.25s ease both;
+  box-shadow: var(--shadow-glow);
+}
+
+.les-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.4rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--clr-border);
+}
+
+.les-modal-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--clr-text);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.les-modal-sub {
+  font-size: 0.8rem;
+  color: var(--clr-text-muted);
+  margin: 0.2rem 0 0;
+}
+
+.les-modal-close {
+  background: var(--clr-surface-2);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  color: var(--clr-text-muted);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.18s, color 0.18s;
+}
+.les-modal-close:hover {
+  background: rgba(249, 115, 22, 0.1);
+  color: var(--clr-orange);
+}
+
+/* ── Modal Tabs ───────────────────────────────────────────── */
+.les-modal-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--clr-border);
+  padding: 0 1.25rem;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.les-modal-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--clr-text-muted);
+  font-family: var(--font-body);
+  font-size: 0.83rem;
+  font-weight: 500;
+  padding: 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.18s, border-color 0.18s;
+}
+.les-modal-tab:hover {
+  color: var(--clr-text);
+}
+.les-modal-tab--active {
+  color: var(--clr-orange);
+  border-bottom-color: var(--clr-orange);
+}
+
+/* ── Modal Body ───────────────────────────────────────────── */
+.les-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem;
+}
+.les-modal-body::-webkit-scrollbar {
+  width: 4px;
+}
+.les-modal-body::-webkit-scrollbar-thumb {
+  background: var(--clr-orange-deep);
+  border-radius: 2px;
+}
+
+/* ── Form ─────────────────────────────────────────────────── */
+.les-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.les-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+
+.les-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.les-form-group--full {
+  grid-column: 1 / -1;
+}
+
+.les-form-group label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--clr-text-sub);
+}
+
+.les-form-group input,
+.les-form-group select,
+.les-form-group textarea {
+  background: var(--clr-surface-2);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.85rem;
+  color: var(--clr-text);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.les-form-group input:focus,
+.les-form-group select:focus,
+.les-form-group textarea:focus {
+  border-color: var(--clr-border-focus);
+  box-shadow: var(--shadow-input);
+}
+.les-form-group input::placeholder,
+.les-form-group textarea::placeholder {
+  color: var(--clr-text-sub);
+}
+.les-form-group select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23d97706' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
+.les-form-hint {
+  font-size: 0.73rem;
+  color: var(--clr-text-sub);
+  margin-top: 0.25rem;
+}
+
+.les-form-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(69, 10, 10, 0.5);
+  border: 1px solid var(--clr-error-border);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 1rem;
+  color: #fca5a5;
+  font-size: 0.83rem;
+  margin: 0.5rem 0;
+}
+
+.les-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--clr-border);
+  background: var(--clr-surface);
+  flex-shrink: 0;
+}
+.les-form-actions--center {
+  justify-content: center;
+}
+
+/* ── File Drop Zone ───────────────────────────────────────── */
+.les-dropzone {
+  border: 2px dashed var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: 1.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--clr-text-sub);
+  text-align: center;
+  transition: border-color 0.18s, background 0.18s;
+}
+.les-dropzone:hover {
+  border-color: rgba(249, 115, 22, 0.5);
+  background: rgba(249, 115, 22, 0.03);
+}
+.les-dropzone--drag {
+  border-color: var(--clr-orange);
+  background: rgba(249, 115, 22, 0.06);
+}
+.les-dropzone--has-file {
+  border-style: solid;
+  border-color: rgba(249, 115, 22, 0.4);
+  background: rgba(249, 115, 22, 0.04);
+}
+
+.les-dropzone p {
+  font-size: 0.85rem;
+  margin: 0;
+}
+.les-dropzone p span {
+  color: var(--clr-orange);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.les-dropzone-types {
+  font-size: 0.73rem !important;
+  color: var(--clr-text-sub);
+}
+
+.les-dropzone-file {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--clr-text);
+  width: 100%;
+  justify-content: center;
+}
+
+.les-dropzone-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--clr-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 260px;
+}
+
+.les-dropzone-remove {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #fca5a5;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.les-dropzone-remove:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* ── Upload Progress ──────────────────────────────────────── */
+.les-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+}
+
+.les-progress-bar {
+  height: 5px;
+  background: linear-gradient(90deg, var(--clr-orange), var(--clr-orange-dark));
+  border-radius: 99px;
+  transition: width 0.3s ease;
+  flex: 1;
+}
+
+.les-progress-wrap span {
+  font-size: 0.75rem;
+  color: var(--clr-orange);
+  font-weight: 600;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ── View Modal — chips / sections ───────────────────────── */
+.les-view-chips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.les-view-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+
+.les-view-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--clr-text-sub);
+}
+
+.les-view-section p {
+  font-size: 0.88rem;
+  color: var(--clr-text-muted);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.les-file-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--clr-orange);
+  text-decoration: none;
+  background: rgba(249, 115, 22, 0.08);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.9rem;
+  width: fit-content;
+  transition: background 0.18s, border-color 0.18s;
+}
+.les-file-link:hover {
+  background: rgba(249, 115, 22, 0.15);
+  border-color: rgba(249, 115, 22, 0.5);
+}
+
+/* Admin note */
+.les-admin-note {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  border: 1px solid transparent;
+}
+.les-admin-note--approved {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
+}
+.les-admin-note--rejected {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+.les-admin-note--pending {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.25);
+  color: #fcd34d;
+}
+
+/* ── Quiz View (inside ViewModal) ─────────────────────────── */
+.les-view-quiz {
+  background: var(--clr-surface-2);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.les-view-quiz-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--clr-text);
+  margin-bottom: 0.65rem;
+}
+
+.les-view-question {
+  font-size: 0.85rem;
+  color: var(--clr-text-muted);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--clr-border);
+  line-height: 1.5;
+}
+.les-view-question:last-child {
+  border-bottom: none;
+}
+
+.les-view-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+  padding-left: 1rem;
+}
+
+.les-view-option {
+  font-size: 0.82rem;
+  color: var(--clr-text-sub);
+  padding: 0.28rem 0.65rem;
+  border-radius: 6px;
+}
+.les-view-option--correct {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #6ee7b7;
+  font-weight: 600;
+}
+
+.les-view-answer {
+  font-size: 0.82rem;
+  color: var(--clr-text-sub);
+  margin-top: 0.35rem;
+  padding-left: 1rem;
+}
+.les-view-answer strong {
+  color: #6ee7b7;
+}
+
+/* ── Quiz Builder ─────────────────────────────────────────── */
+.les-quiz-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.les-quiz-block {
+  background: var(--clr-surface-2);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1rem;
+}
+
+.les-quiz-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.les-quiz-title-inp {
+  flex: 1;
+  min-width: 140px;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.75rem;
+  color: var(--clr-text);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.18s;
+}
+.les-quiz-title-inp:focus {
+  border-color: var(--clr-border-focus);
+}
+.les-quiz-title-inp::placeholder {
+  color: var(--clr-text-sub);
+  font-weight: 400;
+}
+
+.les-quiz-header select {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 2rem 0.45rem 0.75rem;
+  color: var(--clr-text);
+  font-family: var(--font-body);
+  font-size: 0.83rem;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23d97706' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  cursor: pointer;
+}
+
+.les-quiz-remove {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 6px;
+  color: #fca5a5;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.les-quiz-remove:hover {
+  background: rgba(239, 68, 68, 0.22);
+}
+
+.les-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.les-question {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.les-question-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.les-question-row input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--clr-border);
+  padding: 0.3rem 0.25rem;
+  color: var(--clr-text);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.18s;
+}
+.les-question-row input:focus {
+  border-bottom-color: var(--clr-orange);
+}
+.les-question-row input::placeholder {
+  color: var(--clr-text-sub);
+}
+
+.les-q-num {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--clr-orange);
+  flex-shrink: 0;
+  min-width: 20px;
+}
+
+.les-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-left: 0.5rem;
+}
+
+.les-option-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.les-opt-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--clr-text-sub);
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.les-option-row input[type="text"] {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--clr-border);
+  padding: 0.28rem 0.25rem;
+  color: var(--clr-text);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 0.18s;
+}
+.les-option-row input[type="text"]:focus {
+  border-bottom-color: var(--clr-orange);
+}
+.les-option-row input[type="text"]::placeholder {
+  color: var(--clr-text-sub);
+}
+
+.les-correct-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: #6ee7b7;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.les-correct-label input[type="radio"] {
+  accent-color: var(--clr-orange);
+  cursor: pointer;
+}
+
+.les-tf-row {
+  display: flex;
+  gap: 1rem;
+  padding-left: 0.5rem;
+}
+
+.les-tf-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.83rem;
+  color: var(--clr-text-muted);
+  cursor: pointer;
+}
+.les-tf-label input[type="radio"] {
+  accent-color: var(--clr-orange);
+}
+
+.les-answer-inp {
+  width: 100%;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.75rem;
+  color: var(--clr-text);
+  font-family: var(--font-body);
+  font-size: 0.83rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.18s;
+}
+.les-answer-inp:focus {
+  border-color: var(--clr-border-focus);
+}
+.les-answer-inp::placeholder {
+  color: var(--clr-text-sub);
+}
+
+/* ── Progress Modal ───────────────────────────────────────── */
+.les-progress-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.les-stat-card {
+  background: var(--clr-surface-2);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  text-align: center;
+}
+.les-stat-card--green {
+  border-color: rgba(16, 185, 129, 0.25);
+  background: rgba(16, 185, 129, 0.05);
+}
+.les-stat-card--blue {
+  border-color: rgba(99, 102, 241, 0.25);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.les-stat-val {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--clr-text);
+  line-height: 1;
+}
+.les-stat-card--green .les-stat-val {
+  color: #6ee7b7;
+}
+.les-stat-card--blue .les-stat-val {
+  color: #a5b4fc;
+}
+
+.les-stat-label {
+  font-size: 0.72rem;
+  color: var(--clr-text-sub);
+  margin-top: 0.3rem;
+  font-weight: 500;
+}
+
+.les-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.les-table th {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--clr-text-sub);
+  border-bottom: 1px solid var(--clr-border);
+}
+.les-table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--clr-border);
+  color: var(--clr-text);
+}
+.les-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Delete Confirm ───────────────────────────────────────── */
+.les-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  padding: 2rem 1.5rem;
+}
+
+.les-confirm-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.4));
+}
+
+.les-confirm h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--clr-text);
+  margin: 0;
+}
+
+.les-confirm p {
+  font-size: 0.88rem;
+  color: var(--clr-text-muted);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 300px;
+}
+.les-confirm strong {
+  color: var(--clr-text);
+  font-weight: 600;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .les-grid {
+    grid-template-columns: 1fr;
+  }
+  .les-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .les-progress-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .les-modal {
+    max-height: 95vh;
+  }
+  .les-quiz-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
