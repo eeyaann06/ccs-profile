@@ -27,10 +27,7 @@ const NAV = [
   },
   {
     section: "Instructions",
-    items: [
-      { label: "Syllabus", icon: "📋", path: "/admin/syllabus" },
-      { label: "Lessons", icon: "📝", path: "/admin/lessons" },
-    ],
+    items: [{ label: "Syllabus", icon: "📋", path: "/admin/syllabus" }],
   },
 ];
 
