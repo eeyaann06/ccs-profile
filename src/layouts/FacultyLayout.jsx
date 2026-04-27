@@ -1,4 +1,3 @@
-// src/layouts/FacultyLayout.jsx
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -24,10 +23,12 @@ const NAV = [
       { label: "Syllabus", icon: "📋", path: "/faculty/syllabus" },
     ],
   },
-  // ── NEW ──
   {
     section: "Campus",
-    items: [{ label: "Events", icon: "📅", path: "/faculty/events" }],
+    items: [
+      { label: "Events", icon: "📅", path: "/faculty/events" },
+      { label: "Reports", icon: "📊", path: "/faculty/reports" },
+    ],
   },
 ];
 
@@ -36,7 +37,8 @@ const PAGE_TITLES = {
   "/faculty/profile": { title: "My Profile", icon: "👩‍🏫" },
   "/faculty/classrooms": { title: "Classrooms", icon: "🏫" },
   "/faculty/syllabus": { title: "Syllabus", icon: "📋" },
-  "/faculty/events": { title: "Events", icon: "📅" }, // ← NEW
+  "/faculty/events": { title: "Events", icon: "📅" },
+  "/faculty/reports": { title: "Reports", icon: "📊" },
 };
 
 function FacultySidebar({ collapsed, onToggle }) {

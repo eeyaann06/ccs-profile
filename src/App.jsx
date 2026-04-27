@@ -1,4 +1,3 @@
-// src/App.jsx
 import {
   BrowserRouter,
   Routes,
@@ -10,7 +9,7 @@ import { useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import AdminLayout from "./layouts/AdminLayout";
 import FacultyLayout from "./layouts/FacultyLayout";
-import StudentLayout from "./layouts/StudentLayout"; // ← NEW
+import StudentLayout from "./layouts/StudentLayout";
 import Login from "./pages/login";
 import SeedPage from "./pages/SeedPage";
 import StudentProfiles from "./pages/StudentProfiles";
@@ -26,14 +25,15 @@ import FacultySyllabus from "./pages/FacultySyllabus";
 import FacultyClassroomCalendar from "./pages/FacultyClassroomCalendar";
 import AdminDashboard from "./pages/AdminDashboard";
 import FacultyDashboard from "./pages/FacultyDashboard";
-// ── Student pages ──────────────────────────────────────────────
-import StudentDashboard from "./pages/StudentDashboard"; // ← NEW
-import StudentMyProfile from "./pages/StudentMyProfile"; // ← NEW
-import StudentClassroom from "./pages/StudentClassroom"; // ← NEW
-import StudentEvents from "./pages/StudentEvents"; // ← NEW
+import StudentDashboard from "./pages/StudentDashboard";
+import StudentMyProfile from "./pages/StudentMyProfile";
+import StudentClassroom from "./pages/StudentClassroom";
+import StudentEvents from "./pages/StudentEvents";
+import AdminReports from "./pages/AdminReports";
+import FacultyReports from "./pages/FacultyReports";
+import StudentReports from "./pages/StudentReports";
 import "./App.css";
 
-// ─── Idle watcher ─────────────────────────────────────────────
 function IdleRedirect() {
   const { idleLoggedOut } = useAuth();
   const navigate = useNavigate();
@@ -43,7 +43,6 @@ function IdleRedirect() {
   return null;
 }
 
-// ─── Route Guards ──────────────────────────────────────────────
 function AdminRoute({ children }) {
   const { currentUser } = useAuth();
   if (!currentUser) return <Navigate to="/login" replace />;
@@ -65,17 +64,6 @@ function StudentRoute({ children }) {
   return children;
 }
 
-// ─── Placeholder ───────────────────────────────────────────────
-function Placeholder({ icon, title, description }) {
-  return (
-    <div className="placeholder-page">
-      <span className="placeholder-icon">{icon}</span>
-      <h1>{title}</h1>
-      <p>{description}</p>
-    </div>
-  );
-}
-
 function NotFound() {
   return (
     <div className="placeholder-page">
@@ -89,7 +77,6 @@ function NotFound() {
   );
 }
 
-// ─── App Routes ────────────────────────────────────────────────
 function AppRoutes() {
   return (
     <>
@@ -117,6 +104,7 @@ function AppRoutes() {
           <Route path="syllabus" element={<AdminSyllabus />} />
           <Route path="events" element={<Events />} />
           <Route path="research" element={<Research />} />
+          <Route path="reports" element={<AdminReports />} />
         </Route>
 
         {/* ── FACULTY PORTAL ── */}
@@ -134,6 +122,7 @@ function AppRoutes() {
           <Route path="classrooms" element={<FacultyClassroomCalendar />} />
           <Route path="syllabus" element={<FacultySyllabus />} />
           <Route path="events" element={<FacultyEvents />} />
+          <Route path="reports" element={<FacultyReports />} />
         </Route>
 
         {/* ── STUDENT PORTAL ── */}
@@ -150,6 +139,7 @@ function AppRoutes() {
           <Route path="profile" element={<StudentMyProfile />} />
           <Route path="classroom" element={<StudentClassroom />} />
           <Route path="events" element={<StudentEvents />} />
+          <Route path="reports" element={<StudentReports />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

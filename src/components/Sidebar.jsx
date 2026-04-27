@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { auth } from "../config/firebase"; // ✅ add this import
+import { auth } from "../config/firebase";
 import "../styles/Sidebar.css";
 
 const NAV = [
@@ -27,7 +27,10 @@ const NAV = [
   },
   {
     section: "Instructions",
-    items: [{ label: "Syllabus", icon: "📋", path: "/admin/syllabus" }],
+    items: [
+      { label: "Syllabus", icon: "📋", path: "/admin/syllabus" },
+      { label: "Reports", icon: "📊", path: "/admin/reports" },
+    ],
   },
 ];
 
@@ -37,8 +40,6 @@ export default function Sidebar({ collapsed, onToggle }) {
 
   async function handleLogout() {
     await logout();
-
-    // ✅ Wait for Firebase auth state to fully clear before navigating
     await new Promise((resolve) => {
       const unsubscribe = auth.onAuthStateChanged((user) => {
         if (!user) {
@@ -47,7 +48,6 @@ export default function Sidebar({ collapsed, onToggle }) {
         }
       });
     });
-
     navigate("/login");
   }
 

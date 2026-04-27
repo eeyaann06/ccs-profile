@@ -1,9 +1,5 @@
-// src/layouts/StudentLayout.jsx
-// ─────────────────────────────────────────────────────────────
-// Sidebar shell for the Student portal
-// ─────────────────────────────────────────────────────────────
 import { useState } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../config/firebase";
 import { useAuth } from "../context/AuthContext";
@@ -14,6 +10,7 @@ const NAV_ITEMS = [
   { to: "profile", icon: "👤", label: "My Profile" },
   { to: "classroom", icon: "📅", label: "Classroom" },
   { to: "events", icon: "🎉", label: "Events" },
+  { to: "reports", icon: "📊", label: "Reports" },
 ];
 
 const PAGE_TITLES = {
@@ -21,15 +18,17 @@ const PAGE_TITLES = {
   profile: "My Profile",
   classroom: "Classroom Schedule",
   events: "Events",
+  reports: "My Reports",
 };
 
 export default function StudentLayout() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [signingOut, setSigningOut] = useState(false);
 
-  // Derive page title from URL
-  const segment = window.location.pathname.split("/").pop();
+  // Derive page title from URL — use useLocation for reactivity
+  const segment = location.pathname.split("/").pop();
   const pageTitle = PAGE_TITLES[segment] ?? "Student Portal";
 
   const initial = (currentUser?.name ?? currentUser?.email ?? "S")
